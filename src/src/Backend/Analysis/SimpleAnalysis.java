@@ -30,7 +30,7 @@ public class SimpleAnalysis implements SoundAnalysis {
   // Lower values = higher match result.
   private static final double LOUDNESS_WEIGHT = 0.00000002, DYNAMICS_WEIGHT = 0.0000002;
   // Higher values = Bigger result difference between big differences and small differences.
-  private static final double LOUDNESS_EXPONENT = 2.5, DYNAMICS_EXPONENT = 1.5;
+  private static final double LOUDNESS_EXPONENT = 2.5, DYNAMICS_EXPONENT = 2.0;
   // Multiplies the power of differences on individual frequency bins.
   private static final double LOUDNESS_RECURSION = 0.75, DYNAMICS_RECURSION = 0.75;
   // Multiplies arctan bounds from pi/2 to 1.

@@ -20,8 +20,8 @@ public class SimpleCharacteristics {
   private final double[] averageLeftRise, averageRightRise;
   private final double[] averageLeftFall, averageRightFall;
   // Needed to weigh rise/fall differently.
-  private static final double VOLUME_CHANGE_EXPONENT = 3.0;
-  private static final double VOLUME_CHANGE_WEIGHT = 0.01;
+  private static final double VOLUME_CHANGE_EXPONENT = 2.0;
+  private static final double VOLUME_CHANGE_WEIGHT = 0.005;
 
   public SimpleCharacteristics(Normalizer normalizer) {
     float[][] left = normalizer.getNormalized(Channel.LEFT);
@@ -148,12 +148,12 @@ public class SimpleCharacteristics {
       // for each time
       for (int i = 1; i < channel.length; i++) {
         if (rise && channel[i][j] > channel[i-1][j])
-          result[j] += Math.pow(channel[i][j] - channel[i-1][j], VOLUME_CHANGE_EXPONENT);
+          result[j] += Math.pow((channel[i][j] - channel[i-1][j]), VOLUME_CHANGE_EXPONENT);
         if (!rise && channel[i][j] < channel[i-1][j])
-          result[j] += Math.pow(channel[i-1][j] - channel[i][j], VOLUME_CHANGE_EXPONENT);
+          result[j] += Math.pow((channel[i-1][j] - channel[i][j]), VOLUME_CHANGE_EXPONENT);
       }
 
-      result[j] *= VOLUME_CHANGE_WEIGHT / (channel.length * Transform.frequencyAtBin(j));
+      result[j] *= VOLUME_CHANGE_WEIGHT / channel.length;
     }
 
     return result;
