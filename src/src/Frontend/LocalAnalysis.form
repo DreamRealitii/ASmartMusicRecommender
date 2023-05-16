@@ -26,7 +26,7 @@
           <Component id="ProgressBar" alignment="0" max="32767" attributes="0"/>
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace min="-2" pref="133" max="-2" attributes="0"/>
-              <Component id="ImportButton" min="-2" max="-2" attributes="0"/>
+              <Component id="CompareButton" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="32767" attributes="0"/>
               <Component id="AnalyzeButton" min="-2" max="-2" attributes="0"/>
               <EmptySpace min="-2" pref="130" max="-2" attributes="0"/>
@@ -39,18 +39,13 @@
               </Group>
               <EmptySpace min="-2" pref="71" max="-2" attributes="0"/>
           </Group>
-          <Group type="102" attributes="0">
-              <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" attributes="0">
-                      <EmptySpace min="-2" pref="31" max="-2" attributes="0"/>
-                      <Component id="AnalyzeInfo" min="-2" max="-2" attributes="0"/>
-                  </Group>
-                  <Group type="102" alignment="0" attributes="0">
-                      <EmptySpace min="-2" pref="238" max="-2" attributes="0"/>
-                      <Component id="ErrorStatus" min="-2" max="-2" attributes="0"/>
-                  </Group>
+          <Group type="102" alignment="0" attributes="0">
+              <EmptySpace min="-2" pref="31" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                  <Component id="AnalyzeInfo" max="32767" attributes="0"/>
+                  <Component id="ErrorStatus" max="32767" attributes="0"/>
               </Group>
-              <EmptySpace pref="35" max="32767" attributes="0"/>
+              <EmptySpace pref="56" max="32767" attributes="0"/>
           </Group>
           <Group type="102" alignment="0" attributes="0">
               <Component id="backButton" min="-2" max="-2" attributes="0"/>
@@ -70,7 +65,7 @@
               <Component id="AnalyzeInfo" min="-2" max="-2" attributes="0"/>
               <EmptySpace pref="123" max="32767" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
-                  <Component id="ImportButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="CompareButton" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="AnalyzeButton" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
@@ -85,7 +80,7 @@
     <Component class="javax.swing.JLabel" name="AnalyzeInfo">
       <Properties>
         <Property name="horizontalAlignment" type="int" value="0"/>
-        <Property name="text" type="java.lang.String" value="Click the analyze button to analyze a single audio file and graph the perceived frequency response."/>
+        <Property name="text" type="java.lang.String" value="Click the analyze button to analyze a single audio file and graph the some of its characteristics."/>
       </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="ImportInfo">
@@ -94,12 +89,12 @@
         <Property name="text" type="java.lang.String" value="Click the import button to compare multiple .mp3 and .wav files on your computer."/>
       </Properties>
     </Component>
-    <Component class="javax.swing.JButton" name="ImportButton">
+    <Component class="javax.swing.JButton" name="CompareButton">
       <Properties>
-        <Property name="text" type="java.lang.String" value="Import"/>
+        <Property name="text" type="java.lang.String" value="Compare"/>
       </Properties>
       <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="ImportButtonActionPerformed"/>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="CompareButtonActionPerformed"/>
       </Events>
     </Component>
     <Component class="javax.swing.JButton" name="AnalyzeButton">
@@ -119,6 +114,7 @@
     </Component>
     <Component class="javax.swing.JLabel" name="ErrorStatus">
       <Properties>
+        <Property name="horizontalAlignment" type="int" value="0"/>
         <Property name="text" type="java.lang.String" value="Failed to scan music."/>
         <Property name="toolTipText" type="java.lang.String" value=""/>
       </Properties>
