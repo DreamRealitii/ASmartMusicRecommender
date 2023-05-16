@@ -188,17 +188,18 @@ public class LocalAnalysis extends javax.swing.JFrame {
             for (int i = 0; i < files.length; i++)
                 filepaths[i] = files[i].getPath();
             System.out.println("LocalAnalysis: Files selected");
-            SimpleAnalysis.main(filepaths);
 
             List<SimpleAnalysis> analyses = new ArrayList<>();
             ProgressBar.setMinimum(0);
             ProgressBar.setMaximum(files.length);
 
+            ErrorStatus.setVisible(true);
             for (int i = 0; i < files.length; i++) {
                 ProgressBar.setValue(i);
+                ProgressBar.update(ProgressBar.getGraphics());
                 try {
                     ErrorStatus.setText("Scanning file " + files[i].getName());
-                    ErrorStatus.setVisible(true);
+                    ErrorStatus.update(ErrorStatus.getGraphics());
                     analyses.add(new SimpleAnalysis(filepaths[i], true, true));
                 } catch (Exception e) {
                     System.out.println("LocalAnalysis: Failed to scan " + filepaths[i] + " - " + e.getMessage());
