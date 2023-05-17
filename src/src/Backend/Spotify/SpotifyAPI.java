@@ -4,7 +4,6 @@ import Backend.Analysis.SpotifyAnalysis;
 import Backend.Helper.HttpRequest;
 import Backend.Helper.ParseJson;
 
-import java.util.Arrays;
 import java.util.HashMap;
 
 /**
@@ -148,8 +147,8 @@ public class SpotifyAPI {
       String[] artistsArray = ParseJson.getArray(responseString, "artists");
       if (artistsArray.length > 1) {
         StringBuilder artists = new StringBuilder();
-        for (int i = 0; i < artistsArray.length; i++) {
-          artists.append(ParseJson.getString(artistsArray[i], "id"));
+        for (String s : artistsArray) {
+          artists.append(ParseJson.getString(s, "id"));
           result.put("artists", artists.toString());
         }
       }else {
@@ -158,7 +157,7 @@ public class SpotifyAPI {
       }
 
       result.put("genres", genre);
-      System.out.println("Results:" + result);
+      //System.out.println("Results:" + result);
 
     }catch(RuntimeException e) {
       e.printStackTrace();
