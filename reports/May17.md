@@ -1,0 +1,22 @@
+Team Report:
+- Accomplishments:
+    - Add local analysis UI that compares songs and graphs the characteristics of individual songs. (Ethan)
+    - Display Spotify recommendations in UI. (Arnav)
+    - Compare one track to multiple tracks recommended by Spotify. (Eric + Ethan)
+    - TemporalCharacteristics with frequency correlation and BPM matching. (Ethan)
+    - Multithreaded Transform. (Ethan)
+- Meeting Agenda:
+    - Hope Gursameep shows up so Ethan can show him how to add his name to the team member list for the class website. He did finally show up yesterday but we forgot to do this in the rush to finish the beta release.
+    - Talk about the accuracy of our local and online analysis.
+- Goals:
+    - Backend:
+        - FullAnalysis: Write it. (Ethan)
+        - TemporalCharacteristics: Save and load. (Ethan)
+        - ParseJson: Add JUnit tests. (Ethan)
+        - SpotifyAPI: Get song names from track IDs. (Eric)
+        - Normalize: Make this multithreaded too. (Ethan)
+        - Stretch Goal: Implement recursive transform for even faster speed-up. (Ethan)
+    - Frontend:
+        - Display match results in as song titles instead of URLs. (Arnav+Eric)
+        - Document the UI code to make it easier to read. (Arnav)
+        - Factor out UI functions into seperate Control classes. (Ethan)
