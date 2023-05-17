@@ -28,11 +28,11 @@ public class SimpleAnalysis implements SoundAnalysis {
   private final String filePath, fileName;
   // Multiplies the power of loudness/dynamics differences on the match result.
   // Lower values = higher match result.
-  private static final double LOUDNESS_WEIGHT = 0.00000002, DYNAMICS_WEIGHT = 0.0000002;
+  private static final double LOUDNESS_WEIGHT = 0.00005, DYNAMICS_SUM_WEIGHT = 0.0000001, DYNAMICS_DIFF_WEIGHT = 0.000001;
   // Higher values = Bigger result difference between big differences and small differences.
-  private static final double LOUDNESS_EXPONENT = 2.5, DYNAMICS_EXPONENT = 2.0;
+  private static final double LOUDNESS_EXPONENT = 1.5, DYNAMICS_SUM_EXPONENT = 2.0, DYNAMICS_DIFF_EXPONENT = 2.5;
   // Multiplies the power of differences on individual frequency bins.
-  private static final double LOUDNESS_RECURSION = 0.75, DYNAMICS_RECURSION = 0.75;
+  private static final double LOUDNESS_RECURSION = 0.5, DYNAMICS_SUM_RECURSION = 0.75, DYNAMICS_DIFF_RECURSION = 1.0;
   // Multiplies arctan bounds from pi/2 to 1.
   private static final double ARCTAN_MULTIPLIER = 2.0 / Math.PI;
 
@@ -98,18 +98,18 @@ public class SimpleAnalysis implements SoundAnalysis {
 
     double[] thisLeftLoudness = this.characteristics.getAverageVolume(Channel.LEFT);
     double[] thisRightLoudness = this.characteristics.getAverageVolume(Channel.RIGHT);
-    double[] thisLeftRise = this.characteristics.getAverageRise(Channel.LEFT);
-    double[] thisRightRise = this.characteristics.getAverageRise(Channel.RIGHT);
-    double[] thisLeftFall = this.characteristics.getAverageFall(Channel.LEFT);
-    double[] thisRightFall = this.characteristics.getAverageFall(Channel.RIGHT);
+    double[] thisLeftRise = this.characteristics.getAverageRisePlusFall(Channel.LEFT);
+    double[] thisRightRise = this.characteristics.getAverageRisePlusFall(Channel.RIGHT);
+    double[] thisLeftFall = this.characteristics.getAverageRiseMinusFall(Channel.LEFT);
+    double[] thisRightFall = this.characteristics.getAverageRiseMinusFall(Channel.RIGHT);
     double[] otherLeftLoudness = otherSimple.characteristics.getAverageVolume(Channel.LEFT);
     double[] otherRightLoudness = otherSimple.characteristics.getAverageVolume(Channel.RIGHT);
-    double[] otherLeftRise = otherSimple.characteristics.getAverageRise(Channel.LEFT);
-    double[] otherRightRise = otherSimple.characteristics.getAverageRise(Channel.RIGHT);
-    double[] otherLeftFall = otherSimple.characteristics.getAverageFall(Channel.LEFT);
-    double[] otherRightFall = otherSimple.characteristics.getAverageFall(Channel.RIGHT);
+    double[] otherLeftRise = otherSimple.characteristics.getAverageRisePlusFall(Channel.LEFT);
+    double[] otherRightRise = otherSimple.characteristics.getAverageRisePlusFall(Channel.RIGHT);
+    double[] otherLeftFall = otherSimple.characteristics.getAverageRiseMinusFall(Channel.LEFT);
+    double[] otherRightFall = otherSimple.characteristics.getAverageRiseMinusFall(Channel.RIGHT);
 
-    //System.out.println("Comparing " + this.fileName + " to " + otherSimple.fileName);
+    System.out.println("SimpleAnalysis: Comparing " + this.fileName + " to " + otherSimple.fileName);
 
     // if both stereo
     if (thisRightLoudness != null && otherRightLoudness != null)
@@ -145,15 +145,17 @@ public class SimpleAnalysis implements SoundAnalysis {
   // 1/2 = Left/Right Channels
   private static double monoCompare(double[] aL, double[] bL, double[] aR, double[] bR, double[] aF, double[] bF) {
     double loudnessDifference = recursiveSumDifferences(aL, bL, 0, aL.length, LOUDNESS_EXPONENT, LOUDNESS_RECURSION) * LOUDNESS_WEIGHT;
-    double riseDifference = recursiveSumDifferences(aR, bR, 0, aR.length, DYNAMICS_EXPONENT, DYNAMICS_RECURSION) * DYNAMICS_WEIGHT;
-    double fallDifference = recursiveSumDifferences(aF, bF, 0, aF.length, DYNAMICS_EXPONENT, DYNAMICS_RECURSION) * DYNAMICS_WEIGHT;
+    double risePlusFallDifference = recursiveSumDifferences(aR, bR, 0, aR.length, DYNAMICS_SUM_EXPONENT,
+        DYNAMICS_SUM_RECURSION) * DYNAMICS_SUM_WEIGHT;
+    double riseMinusFallDifference = recursiveSumDifferences(aF, bF, 0, aF.length, DYNAMICS_DIFF_EXPONENT,
+        DYNAMICS_DIFF_RECURSION) * DYNAMICS_DIFF_WEIGHT;
 
-    //System.out.println("loudness = " + loudnessDifference);
-    //System.out.println("rise = " + riseDifference);
-    //System.out.println("fall = " + fallDifference);
-    //System.out.println();
+    /*System.out.println("loudness = " + loudnessDifference);
+    System.out.println("rise+fall = " + risePlusFallDifference);
+    System.out.println("rise-fall = " + riseMinusFallDifference);
+    System.out.println();*/
 
-    double difference = ARCTAN_MULTIPLIER * Math.atan(loudnessDifference + riseDifference + fallDifference);
+    double difference = ARCTAN_MULTIPLIER * Math.atan(loudnessDifference + risePlusFallDifference + riseMinusFallDifference);
 
     return 1.0 - difference;
   }

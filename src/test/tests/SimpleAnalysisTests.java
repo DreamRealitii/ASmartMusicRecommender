@@ -86,7 +86,7 @@ public class SimpleAnalysisTests {
   // Passing Requirement: A song played backwards does not match against the original.
   @Test
   public void testReverse() throws IOException {
-    testDifferent("src/test/resource/Blue_Pearl.wav", "src/test/resource/Blue_Pearl_Reversed.mp3", 1 - smallErrorBound);
+    testDifferent("src/test/resource/Blue_Pearl.wav", "src/test/resource/Blue_Pearl_Reversed.mp3", largeErrorBound);
   }
 
   // Passing Requirement: More reverb applied to same sound = lower match result.

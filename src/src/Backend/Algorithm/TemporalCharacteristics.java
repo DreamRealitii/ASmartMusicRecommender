@@ -156,8 +156,8 @@ public class TemporalCharacteristics extends SimpleCharacteristics {
 
       System.out.println("Left channel characteristics:");
       double[] leftVolume = temporalCharacteristics.getAverageVolume(Channel.LEFT);
-      double[] leftRise = temporalCharacteristics.getAverageRise(Channel.LEFT);
-      double[] leftFall = temporalCharacteristics.getAverageFall(Channel.LEFT);
+      double[] leftRise = temporalCharacteristics.getAverageRisePlusFall(Channel.LEFT);
+      double[] leftFall = temporalCharacteristics.getAverageRiseMinusFall(Channel.LEFT);
 
       PrintHelper.printFrequencies();
       PrintHelper.printValues("Loudness", leftVolume);
