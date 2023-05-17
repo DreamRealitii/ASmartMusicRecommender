@@ -24,7 +24,7 @@ public class SpotifyAnalysis implements SoundAnalysis {
   // Maximum difference = 1.0 * number of analysis values.
   private static final double MAX_DIFFERENCE = 13.0;
   // Exponentially adjusts the value of individual differences less than 1.0.
-  private static final double DIFFERENCE_EXPONENT = 0.5;
+  private static final double DIFFERENCE_EXPONENT = 2.0;
   // Multiplies arctan bounds from pi/2 to 1.
   private static final double ARCTAN_MULTIPLIER = 2.0 / Math.PI;
   private final String trackId;
