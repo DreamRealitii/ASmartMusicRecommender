@@ -6,12 +6,10 @@ package Frontend;
 
 import Backend.Analysis.AnalysisCompare;
 import Backend.Analysis.AnalysisCompare.CompareResult;
-import Backend.Analysis.SoundAnalysis;
 import Backend.Analysis.SpotifyAnalysis;
 import Backend.Spotify.SpotifyAPI;
 
 import javax.swing.*;
-import java.awt.*;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,18 +20,27 @@ import java.util.List;
  */
 public class MainSearch extends javax.swing.JFrame {
 
-    // Values above 50 will not work for now.
-    private int numberOfComparisonSongs = 50;
     private String id = "";
-    private DecimalFormat percentFormat = new DecimalFormat("0.00%");
-    private String[] resultURLs = new String[numberOfComparisonSongs];
-    //private javax.swing.JScrollPane scrollPanel;
-    //private javax.swing.JList<String> songList;
+    private String[] resultURLs;
+    private static final DecimalFormat percentFormat = new DecimalFormat("0.00%");
+
     /**
      * Creates new form MainSearch
      */
     public MainSearch() {
         initComponents();
+        // Empty list.
+        songList.setModel(new AbstractListModel<>() {
+            @Override
+            public int getSize() {
+                return 0;
+            }
+
+            @Override
+            public String getElementAt(int index) {
+                return null;
+            }
+        });
     }
 
     /**
@@ -173,12 +180,12 @@ public class MainSearch extends javax.swing.JFrame {
         suggestButton.setText("Working...");
         try {
             // Get user analysis.
-            List<SoundAnalysis> userAnalysis = new ArrayList<>();
+            List<SpotifyAnalysis> userAnalysis = new ArrayList<>();
             userAnalysis.add(SpotifyAPI.getTrackFeatures(id));
 
             // Get N random songs to compare with.
-            List<SoundAnalysis> comparisonAnalyses = new ArrayList<>(numberOfComparisonSongs);
-            String[] comparisonIds = SpotifyAPI.randomSong(numberOfComparisonSongs);
+            List<SpotifyAnalysis> comparisonAnalyses = new ArrayList<>();
+            String[] comparisonIds = SpotifyAPI.getRecommendations(userAnalysis.get(0));
             for (String id : comparisonIds)
                 comparisonAnalyses.add(SpotifyAPI.getTrackFeatures(id));
 
@@ -196,7 +203,7 @@ public class MainSearch extends javax.swing.JFrame {
             }
 
             // DefaultListModel object to update the list representing songs
-            DefaultListModel lm = new DefaultListModel();
+            DefaultListModel<String> lm = new DefaultListModel<>();
             // iterate through each url result and append the match percentage
             for (int i = 0; i < resultURLs.length; i++) {
                 String matchPercent = percentFormat.format(results.get(i).result);
