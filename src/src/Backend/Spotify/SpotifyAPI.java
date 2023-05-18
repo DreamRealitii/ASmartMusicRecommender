@@ -90,7 +90,7 @@ public class SpotifyAPI {
     }
     String jsonString;
     try {
-      jsonString = HttpRequest.getJsonFromUrl(url.substring(0, url.length()-1), accessToken);
+      jsonString = HttpRequest.getJsonFromUrl(url.toString(), accessToken);
     } catch (RuntimeException e) {
       e.printStackTrace();
       throw new RuntimeException("SpotifyAPI: Failed to connect to Spotify - " + e.getMessage());
