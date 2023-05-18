@@ -51,18 +51,18 @@ public class LocalAnalysisResult extends JFrame {
   }
 
   private static DefaultCategoryDataset createDataset(SimpleCharacteristics characteristics) {
-    String series1 = "Perceived Loudness", series2 = "Rise Speed", series3 = "Fall Speed";
+    String series1 = "Perceived Loudness", series2 = "Rise+Fall Speed", series3 = "Rise-Fall Speed";
     DefaultCategoryDataset result = new DefaultCategoryDataset();
 
     double[] loudness = getLoudness(characteristics);
     for (int i = 0; i < Transform.FREQUENCY_RESOLUTION; i++)
       result.addValue(loudness[i], series1, String.valueOf((int)(Transform.frequencyAtBin(i))));
 
-    double[] rise = getRise(characteristics);
+    double[] rise = getRisePlusFall(characteristics);
     for (int i = 0; i < Transform.FREQUENCY_RESOLUTION; i++)
       result.addValue(rise[i], series2, String.valueOf((int)(Transform.frequencyAtBin(i))));
 
-    double[] fall = getFall(characteristics);
+    double[] fall = getRiseMinusFall(characteristics);
     for (int i = 0; i < Transform.FREQUENCY_RESOLUTION; i++)
       result.addValue(fall[i], series3, String.valueOf((int)(Transform.frequencyAtBin(i))));
 
@@ -75,14 +75,14 @@ public class LocalAnalysisResult extends JFrame {
         characteristics.getAverageVolume(Channel.RIGHT));
   }
 
-  private static double[] getRise(SimpleCharacteristics characteristics) {
-    return getCenter(characteristics.getAverageRise(Channel.LEFT),
-        characteristics.getAverageRise(Channel.RIGHT));
+  private static double[] getRisePlusFall(SimpleCharacteristics characteristics) {
+    return getCenter(characteristics.getAverageRisePlusFall(Channel.LEFT),
+        characteristics.getAverageRisePlusFall(Channel.RIGHT));
   }
 
-  private static double[] getFall(SimpleCharacteristics characteristics) {
-    return getCenter(characteristics.getAverageFall(Channel.LEFT),
-        characteristics.getAverageFall(Channel.RIGHT));
+  private static double[] getRiseMinusFall(SimpleCharacteristics characteristics) {
+    return getCenter(characteristics.getAverageRiseMinusFall(Channel.LEFT),
+        characteristics.getAverageRiseMinusFall(Channel.RIGHT));
   }
 
   // For mono: Returns left

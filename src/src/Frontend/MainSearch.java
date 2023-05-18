@@ -6,15 +6,17 @@ package Frontend;
 
 import Backend.Analysis.AnalysisCompare;
 import Backend.Analysis.AnalysisCompare.CompareResult;
-import Backend.Analysis.SoundAnalysis;
 import Backend.Analysis.SpotifyAnalysis;
 import Backend.Spotify.SpotifyAPI;
 
 import javax.swing.*;
-import java.awt.*;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
+
+import java.awt.datatransfer.StringSelection;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
 
 /**
  *
@@ -22,18 +24,27 @@ import java.util.List;
  */
 public class MainSearch extends javax.swing.JFrame {
 
-    // Values above 50 will not work for now.
-    private int numberOfComparisonSongs = 50;
     private String id = "";
-    private DecimalFormat percentFormat = new DecimalFormat("0.00%");
-    private String[] resultURLs = new String[numberOfComparisonSongs];
-    //private javax.swing.JScrollPane scrollPanel;
-    //private javax.swing.JList<String> songList;
+    private String[] resultURLs;
+    private static final DecimalFormat percentFormat = new DecimalFormat("0.00%");
+
     /**
      * Creates new form MainSearch
      */
     public MainSearch() {
         initComponents();
+        // Empty list.
+        songList.setModel(new AbstractListModel<>() {
+            @Override
+            public int getSize() {
+                return 0;
+            }
+
+            @Override
+            public String getElementAt(int index) {
+                return null;
+            }
+        });
     }
 
     /**
@@ -54,6 +65,8 @@ public class MainSearch extends javax.swing.JFrame {
         instructions = new javax.swing.JLabel();
         scrollPanel = new javax.swing.JScrollPane();
         songList = new javax.swing.JList<>();
+        copyButton = new javax.swing.JButton();
+        playlistButton = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -89,12 +102,22 @@ public class MainSearch extends javax.swing.JFrame {
         instructions.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         instructions.setText("<html>\nType in the \"track ID\" of a Spotify song. This can be found in<br>\nthe song's \"share\" link after \"/track/\". For example, the track ID of<br>\n <a href=\"https://open.spotify.com/track/17lrs2l9qXEuFybi7hSsid?si=37b141e7c99649c7\">\nhttps://open.spotify.com/track/17lrs2l9qXEuFybi7hSsid?si=37b141e7c99649c7</a><br>\nis \"17lrs2l9qXEuFybi7hSsid\". Do not include the \"?si=\" value.\n</html>");
 
-        songList.setModel(new javax.swing.AbstractListModel<String>() {
-            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
-            public int getSize() { return strings.length; }
-            public String getElementAt(int i) { return strings[i]; }
-        });
+        songList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         scrollPanel.setViewportView(songList);
+
+        copyButton.setText("Copy Selected");
+        copyButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                copyButtonActionPerformed(evt);
+            }
+        });
+
+        playlistButton.setText("Generate Playlist");
+        playlistButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                playlistButtonActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -102,35 +125,39 @@ public class MainSearch extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(instructions, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 816, Short.MAX_VALUE)
             .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(156, 156, 156)
-                        .addComponent(errorLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addComponent(idLabel)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(idInput, javax.swing.GroupLayout.PREFERRED_SIZE, 146, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addComponent(backButton)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(suggestButton, javax.swing.GroupLayout.PREFERRED_SIZE, 135, javax.swing.GroupLayout.PREFERRED_SIZE)))))
-                .addGap(18, 18, 18)
-                .addComponent(scrollPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 485, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .addGroup(layout.createSequentialGroup()
-                .addGap(349, 349, 349)
+                .addGap(26, 26, 26)
+                .addComponent(backButton)
+                .addGap(251, 251, 251)
                 .addComponent(titleLabel)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(idLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(6, 6, 6)
+                                .addComponent(errorLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(idInput, javax.swing.GroupLayout.PREFERRED_SIZE, 146, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(18, 18, 18))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(copyButton)
+                            .addComponent(suggestButton, javax.swing.GroupLayout.PREFERRED_SIZE, 135, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(playlistButton))
+                        .addGap(12, 12, 12)))
+                .addComponent(scrollPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 485, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(46, 46, 46))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(25, 25, 25)
-                .addComponent(titleLabel)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(titleLabel)
+                    .addComponent(backButton))
                 .addGap(18, 18, 18)
                 .addComponent(instructions, javax.swing.GroupLayout.PREFERRED_SIZE, 93, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -141,12 +168,14 @@ public class MainSearch extends javax.swing.JFrame {
                             .addComponent(idInput, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(errorLabel)
-                        .addGap(18, 18, 18)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(backButton)
-                            .addComponent(suggestButton)))
-                    .addComponent(scrollPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(73, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(suggestButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(copyButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(playlistButton))
+                    .addComponent(scrollPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(40, Short.MAX_VALUE))
         );
 
         pack();
@@ -173,12 +202,14 @@ public class MainSearch extends javax.swing.JFrame {
         suggestButton.setText("Working...");
         try {
             // Get user analysis.
-            List<SoundAnalysis> userAnalysis = new ArrayList<>();
-            userAnalysis.add(SpotifyAPI.getTrackFeatures(id));
+            List<SpotifyAnalysis> userAnalysis = new ArrayList<>();
+            String trackId = id.substring(31, 53);
+            System.out.println("TrackID:" + trackId);
+            userAnalysis.add(SpotifyAPI.getTrackFeatures(trackId));
 
             // Get N random songs to compare with.
-            List<SoundAnalysis> comparisonAnalyses = new ArrayList<>(numberOfComparisonSongs);
-            String[] comparisonIds = SpotifyAPI.randomSong(numberOfComparisonSongs);
+            List<SpotifyAnalysis> comparisonAnalyses = new ArrayList<>();
+            String[] comparisonIds = SpotifyAPI.getRecommendations(userAnalysis.get(0));
             for (String id : comparisonIds)
                 comparisonAnalyses.add(SpotifyAPI.getTrackFeatures(id));
 
@@ -196,7 +227,7 @@ public class MainSearch extends javax.swing.JFrame {
             }
 
             // DefaultListModel object to update the list representing songs
-            DefaultListModel lm = new DefaultListModel();
+            DefaultListModel<String> lm = new DefaultListModel<>();
             // iterate through each url result and append the match percentage
             for (int i = 0; i < resultURLs.length; i++) {
                 String matchPercent = percentFormat.format(results.get(i).result);
@@ -206,6 +237,7 @@ public class MainSearch extends javax.swing.JFrame {
             }
             // set the current ListModel as our updated DefaultListModel
             songList.setModel(lm);
+            errorLabel.setVisible(false);
             // update the frame
             this.revalidate();
             this.repaint();
@@ -226,6 +258,36 @@ public class MainSearch extends javax.swing.JFrame {
     private void idInputKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_idInputKeyReleased
         id = idInput.getText();
     }//GEN-LAST:event_idInputKeyReleased
+
+    private void copyButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_copyButtonActionPerformed
+        System.out.println("MainSearch: Copy Selected button clicked.");
+
+        String url = matchToUrl(songList.getSelectedValue());
+        StringSelection stringSelection = new StringSelection(url);
+        Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+        clipboard.setContents(stringSelection, null);
+
+        System.out.println("MainSearch: Copied URL " + url);
+    }//GEN-LAST:event_copyButtonActionPerformed
+
+    private void playlistButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_playlistButtonActionPerformed
+        System.out.println("MainSearch: Generate Playlist button clicked.");
+
+        List<String> ids = new ArrayList<>();
+        for (String resultURL : resultURLs)
+            if (resultURL != null)
+                ids.add("spotify:track:" + urlToId(resultURL));
+
+        SpotifyAPI.createPlaylist(ids.toArray(new String[0]));
+    }//GEN-LAST:event_playlistButtonActionPerformed
+
+    private static String urlToId(String url) {
+        return url.substring(31);
+    }
+
+    private static String matchToUrl(String match) {
+        return match.substring(0, match.indexOf(','));
+    }
 
     /**
      * @param args the command line arguments
@@ -264,10 +326,12 @@ public class MainSearch extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton backButton;
+    private javax.swing.JButton copyButton;
     private javax.swing.JLabel errorLabel;
     private javax.swing.JTextField idInput;
     private javax.swing.JLabel idLabel;
     private javax.swing.JLabel instructions;
+    private javax.swing.JButton playlistButton;
     private javax.swing.JScrollPane scrollPanel;
     private javax.swing.JList<String> songList;
     private javax.swing.JButton suggestButton;

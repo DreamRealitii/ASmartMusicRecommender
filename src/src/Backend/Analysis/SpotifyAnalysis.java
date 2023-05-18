@@ -24,10 +24,11 @@ public class SpotifyAnalysis implements SoundAnalysis {
   // Maximum difference = 1.0 * number of analysis values.
   private static final double MAX_DIFFERENCE = 13.0;
   // Exponentially adjusts the value of individual differences less than 1.0.
-  private static final double DIFFERENCE_EXPONENT = 0.5;
+  private static final double DIFFERENCE_EXPONENT = 2.0;
   // Multiplies arctan bounds from pi/2 to 1.
   private static final double ARCTAN_MULTIPLIER = 2.0 / Math.PI;
   private final String trackId;
+  private final String artistsID, genres;
 
   public SpotifyAnalysis(String jsonString, String trackId) {
     acousticness = ParseJson.getDouble(jsonString, "acousticness");
@@ -44,6 +45,27 @@ public class SpotifyAnalysis implements SoundAnalysis {
     mode = ParseJson.getInt(jsonString, "mode");
     time_signature = ParseJson.getInt(jsonString, "time_signature");
     this.trackId = trackId;
+    this.artistsID = "";
+    this.genres = "";
+  }
+
+  public SpotifyAnalysis(String jsonString, String trackId, String artistsId, String genres) {
+    acousticness = ParseJson.getDouble(jsonString, "acousticness");
+    danceability = ParseJson.getDouble(jsonString, "danceability");
+    energy = ParseJson.getDouble(jsonString, "energy");
+    instrumentalness = ParseJson.getDouble(jsonString, "instrumentalness");
+    liveness = ParseJson.getDouble(jsonString, "liveness");
+    speechiness = ParseJson.getDouble(jsonString, "speechiness");
+    valence = ParseJson.getDouble(jsonString, "valence");
+    loudness = ParseJson.getDouble(jsonString, "loudness");
+    tempo = ParseJson.getDouble(jsonString, "tempo");
+    duration_ms = ParseJson.getInt(jsonString, "duration_ms");
+    key = ParseJson.getInt(jsonString, "key");
+    mode = ParseJson.getInt(jsonString, "mode");
+    time_signature = ParseJson.getInt(jsonString, "time_signature");
+    this.trackId = trackId;
+    this.artistsID = artistsId;
+    this.genres = genres;
   }
 
   public SpotifyAnalysis(double acousticness, double danceability, double energy,
@@ -63,6 +85,8 @@ public class SpotifyAnalysis implements SoundAnalysis {
     this.mode = mode;
     this.time_signature = time_signature;
     this.trackId = trackId;
+    this.artistsID = "";
+    this.genres = "";
   }
 
   //endregion
@@ -70,6 +94,14 @@ public class SpotifyAnalysis implements SoundAnalysis {
   //region Methods
   public String getTrackId() {
     return trackId;
+  }
+
+  public String getArtistsID(){
+    return artistsID;
+  }
+
+  public String getGenres(){
+    return genres;
   }
 
   @Override
@@ -209,7 +241,11 @@ public class SpotifyAnalysis implements SoundAnalysis {
     }
 
     SpotifyAPI.setUserId(args[0]);
-    SpotifyAPI.createPlaylist(trackIds);
+    for (int i = 0; i < songs.length; i++) {
+      String[] recommendations = SpotifyAPI.getRecommendations(songs[i]);
+      System.out.println("Recommendations: " + Arrays.toString(recommendations) + "Length: " + recommendations.length);
+    }
+//    SpotifyAPI.createPlaylist(trackIds);
 
     System.out.println("Random track link: " + Arrays.toString(SpotifyAPI.randomSong(35)));
   }

@@ -6,7 +6,7 @@
 
     <groupId>groupId</groupId>
     <artifactId>ASmartMusicRecommender</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>Beta</version>
 
     <build>
         <sourceDirectory>src/src</sourceDirectory>
@@ -27,6 +27,30 @@
                     <archive>
                         <manifest>
                             <mainClass>Frontend.Home</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                    <archive>
+                        <manifest>
+                            <mainClass>
+                                Frontend.Home
+                            </mainClass>
                         </manifest>
                     </archive>
                 </configuration>

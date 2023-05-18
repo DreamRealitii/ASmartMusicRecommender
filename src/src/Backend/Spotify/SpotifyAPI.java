@@ -4,6 +4,8 @@ import Backend.Analysis.SpotifyAnalysis;
 import Backend.Helper.HttpRequest;
 import Backend.Helper.ParseJson;
 
+import java.util.HashMap;
+
 /**
  * @author Ethan Carnahan, Eric Kumar
  * Used to interact with Spotify.
@@ -16,9 +18,11 @@ public class SpotifyAPI {
   private static final String VIEW_PLAYLIST_URL = "https://api.spotify.com/v1/playlists/";
   private static final String SEARCH_SONG_URL = "https://api.spotify.com/v1/search?q=";
   private static final String TRACK_URL = "https://api.spotify.com/v1/tracks/";
+  private static final String SONG_RECOMMENDATION_URL = "https://api.spotify.com/v1/recommendations?";
   private static final String JSON_TYPE = "application/json";
   private static final SpotifyAuth auth = new SpotifyAuth();
   private static String USER_ID = "";
+
 
   //region Public methods
 
@@ -86,7 +90,7 @@ public class SpotifyAPI {
     }
     String jsonString;
     try {
-      jsonString = HttpRequest.getJsonFromUrl(url.substring(0, url.length()-1), accessToken);
+      jsonString = HttpRequest.getJsonFromUrl(url.toString(), accessToken);
     } catch (RuntimeException e) {
       e.printStackTrace();
       throw new RuntimeException("SpotifyAPI: Failed to connect to Spotify - " + e.getMessage());
@@ -119,7 +123,47 @@ public class SpotifyAPI {
     }
 
     // Parse response into a SpotifyAnalysis object.
-    return new SpotifyAnalysis(jsonString, trackId);
+    HashMap<String, String> artistsAndGenres = getArtistAndGenre(trackId);
+    return new SpotifyAnalysis(jsonString, trackId, artistsAndGenres.get("artists"), artistsAndGenres.get("genres"));
+  }
+
+  /**
+   * Gets the artistID and genre of a track
+   *
+   * @param trackId TrackId for song to get the artist and genre
+   * @throws RuntimeException if something goes wrong. It could be so many things.
+   */
+  private static HashMap<String, String> getArtistAndGenre(String trackId) {
+    HashMap<String, String> result = new HashMap<>();
+    String accessToken = auth.getAccessCode();
+    String url = TRACK_URL + trackId;
+    String responseString;
+    try{
+      responseString = HttpRequest.getJsonFromUrl(url, accessToken);
+      String secondResponseString = HttpRequest.getJsonFromUrl("https://api.spotify.com/v1/recommendations/available-genre-seeds", accessToken);
+      String[] recommendedGenres = ParseJson.getArray(secondResponseString, "genres");
+      int seedGenre =  (int)(Math.random() * recommendedGenres.length);
+      String genre = recommendedGenres[seedGenre];
+      String[] artistsArray = ParseJson.getArray(responseString, "artists");
+      if (artistsArray.length > 1) {
+        StringBuilder artists = new StringBuilder();
+        for (String s : artistsArray) {
+          artists.append(ParseJson.getString(s, "id"));
+          result.put("artists", artists.toString());
+        }
+      }else {
+        String id = ParseJson.getString(artistsArray[0], "id");
+        result.put("artists", id);
+      }
+
+      result.put("genres", genre);
+      //System.out.println("Results:" + result);
+
+    }catch(RuntimeException e) {
+      e.printStackTrace();
+      throw new RuntimeException("SpotifyAPI: Failed to connect to Spotify - " + e.getMessage());
+    }
+    return result;
   }
 
   /**
@@ -153,7 +197,7 @@ public class SpotifyAPI {
    * Fetches a random song from Spotify
    *
    * @throws RuntimeException if something goes wrong. It could be so many things.
-   * @return The URL to a random song from Spotify
+   * @return The Spotify IDs of random songs from Spotify
    */
 
   public static String[] randomSong(int num) {
@@ -203,6 +247,38 @@ public class SpotifyAPI {
     return spotifyIds;
   }
 
+  /**
+   * Gets track recommendations from Spotify that we will use in analysis to give
+   * better recommendations
+   *
+   * @throws RuntimeException if something goes wrong. It could be so many things.
+   * @return The Spotify IDs of songs recommended by Spotify
+   */
+  public static String[] getRecommendations(SpotifyAnalysis track) {
+    String accessToken = auth.getAccessCode();
+    String genre = track.getGenres();
+    genre = genre.substring(1, genre.length()-2);
+    String requestUrl = SONG_RECOMMENDATION_URL + "seed_artists=" + track.getArtistsID() + "&seed_genres=" + genre + "&seed_tracks=" + track.getTrackId();
+    String responseString;
+    try{
+      responseString = HttpRequest.getJsonFromUrl(requestUrl, accessToken);
+      String[] tracks = ParseJson.getArray(responseString, "tracks");
+      String[] recommendations;
+      if (tracks.length > 1) {
+        recommendations = new String[tracks.length];
+        for(int i = 0; i < tracks.length; i++) {
+          recommendations[i] = ParseJson.getString(tracks[i], "id");
+        }
+      }else {
+        recommendations = new String[1];
+        recommendations[0] = ParseJson.getString(tracks[0], "id");
+      }
+      return recommendations;
+    }catch(RuntimeException e) {
+      e.printStackTrace();
+      throw new RuntimeException("SpotifyAPI: Failed to connect to Spotify - " + e.getMessage());
+    }
+  }
   //endregion
 
 }

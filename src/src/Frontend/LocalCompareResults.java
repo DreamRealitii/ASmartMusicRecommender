@@ -10,6 +10,7 @@ import Backend.Helper.PrintHelper;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.AbstractListModel;
+import javax.swing.WindowConstants;
 
 /**
  *
@@ -56,7 +57,7 @@ public class LocalCompareResults extends javax.swing.JFrame {
         jScrollPane1 = new javax.swing.JScrollPane();
         ResultList = new javax.swing.JList<>();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
         jScrollPane1.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
         jScrollPane1.setCursor(new java.awt.Cursor(java.awt.Cursor.TEXT_CURSOR));

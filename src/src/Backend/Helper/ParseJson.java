@@ -14,15 +14,23 @@ public class ParseJson {
 
   // Gets a json value key:{object} from a json object.
   public static String getObject(String jsonObject, String key) {
+    if (checkNull(jsonObject, key))
+      return null;
+
     return "{" + getValue(jsonObject, key, "{}") + "}";
   }
 
   // Gets a json value key:[array] from a json object.
   public static String[] getArray(String jsonObject, String key) {
+    if (checkNull(jsonObject, key))
+      return null;
+
     String array = getValue(jsonObject, key, "[]");
-    List<String> result = new ArrayList<>();
+    if (array.length() == 0)
+      return new String[0];
 
     // Split array into elements.
+    List<String> result = new ArrayList<>();
     int start = 0;
     int numBounds = 0;
     boolean inString = false;
@@ -45,18 +53,24 @@ public class ParseJson {
           numBounds--;
       }
     }
-    // Array is size 0 or 1.
-    if (result.size() == 0)
-      result.add(array);
+    // Add last element
+    result.add(array.substring(start));
+
     return result.toArray(new String[0]);
   }
 
   // Gets a json value key:"string" from a json object.
   public static String getString(String jsonObject, String key) {
+    if (checkNull(jsonObject, key))
+      return null;
+
     return getValue(jsonObject, key, "\"\"");
   }
 
-  public static boolean getBool(String jsonObject, String key) {
+  public static Boolean getBool(String jsonObject, String key) {
+    if (checkNull(jsonObject, key))
+      return null;
+
     String result = getNumber(jsonObject, key);
       if (result.equals("true") || result.equals("false")) {
           return Boolean.parseBoolean(result);
@@ -66,12 +80,18 @@ public class ParseJson {
   }
 
   // Gets a json value key:integer from a json object.
-  public static int getInt(String jsonObject, String key) {
+  public static Integer getInt(String jsonObject, String key) {
+    if (checkNull(jsonObject, key))
+      return null;
+
     return Integer.parseInt(getNumber(jsonObject, key));
   }
 
   // Gets a json value key.double from a json object.
-  public static double getDouble(String jsonObject, String key) {
+  public static Double getDouble(String jsonObject, String key) {
+    if (checkNull(jsonObject, key))
+      return null;
+
     return Double.parseDouble(getNumber(jsonObject, key));
   }
 
@@ -83,6 +103,7 @@ public class ParseJson {
   // bounds are "" for strings, [] for arrays, and {} for objects.
   private static String getValue(String jsonObject, String key, String bounds) {
     String string = removeSpaces(jsonObject);
+
     int start = findStart(string, key, bounds);
     int end = findEnd(string, key, start - (bounds.length() / 2), bounds);
 
@@ -174,6 +195,17 @@ public class ParseJson {
         }
     }
     return result.toString();
+  }
+
+  private static boolean checkNull(String jsonString, String key) {
+    if (jsonString.equalsIgnoreCase("null"))
+      return true;
+
+    String json = removeSpaces(jsonString);
+    int start = findStart(json, key, "");
+    int end = findEnd(json, key, start, "");
+
+    return json.substring(start, end).equalsIgnoreCase("null");
   }
 
   //endregion
