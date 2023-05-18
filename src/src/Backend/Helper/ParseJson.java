@@ -198,8 +198,10 @@ public class ParseJson {
   }
 
   private static boolean checkNull(String jsonString, String key) {
-    String json = removeSpaces(jsonString);
+    if (jsonString.equalsIgnoreCase("null"))
+      return true;
 
+    String json = removeSpaces(jsonString);
     int start = findStart(json, key, "");
     int end = findEnd(json, key, start, "");
 
