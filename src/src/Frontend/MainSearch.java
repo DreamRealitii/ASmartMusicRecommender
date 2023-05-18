@@ -203,7 +203,9 @@ public class MainSearch extends javax.swing.JFrame {
         try {
             // Get user analysis.
             List<SpotifyAnalysis> userAnalysis = new ArrayList<>();
-            userAnalysis.add(SpotifyAPI.getTrackFeatures(id));
+            String trackId = id.substring(31, 53);
+            System.out.println("TrackID:" + trackId);
+            userAnalysis.add(SpotifyAPI.getTrackFeatures(trackId));
 
             // Get N random songs to compare with.
             List<SpotifyAnalysis> comparisonAnalyses = new ArrayList<>();
