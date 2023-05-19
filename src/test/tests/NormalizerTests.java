@@ -2,17 +2,18 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import Backend.Algorithm.*;
 
+import Backend.Algorithm.Reader.Channel;
 import org.junit.jupiter.api.*;
 
 public class NormalizerTests {
-    private static final double errorBound = 1;
+    private static final double errorBound = 0.1;
 
     // Passing requirement: Two flat frequency responses of different volumes are normalized to the same perceived loudness.
     @Test
     public void testVolume() {
         float[][] quiet = generateNormalizedFlatTransform(10, 0.1f);
         float[][] loud = generateNormalizedFlatTransform(10, 10000f);
-        assertEquals(0.0, sum2DArray(quiet) - sum2DArray(loud), errorBound);
+        assert2DArrayEquals(quiet, loud);
     }
 
     // Passing requirement: Two flat frequency responses of different lengths are normalized to the same perceived loudness.
@@ -20,7 +21,7 @@ public class NormalizerTests {
     public void testDuration() {
         float[][] brief = generateNormalizedFlatTransform(10, 100f);
         float[][] lengthy = generateNormalizedFlatTransform(100, 100f);
-        assertEquals(0.0, sum2DArray(brief) - sum2DArray(lengthy), errorBound);
+        assert2DArrayEquals(brief, lengthy);
     }
 
     private float[][] generateNormalizedFlatTransform(int length, float volume) {
@@ -28,14 +29,12 @@ public class NormalizerTests {
         for (int i = 0; i < result.length; i++)
             for (int j = 0; j < result[0].length; j++)
                 result[i][j] = volume;
-        return Normalizer.normalizeTransform(result);
+        return new Normalizer(result, null).getNormalized(Channel.LEFT);
     }
 
-    private double sum2DArray(float[][] array) {
-        double result = 0.0;
-        for (float[] fa : array)
-            for (float f : fa)
-                result += f;
-        return result / array.length;
+    private void assert2DArrayEquals(float[][] a, float[][] b) {
+        for (int i = 0; i < a.length && i < b.length; i++)
+            for (int j = 0; j < a[i].length && j < b[i].length; j++)
+                assertEquals(a[i][j], b[i][j], errorBound);
     }
 }

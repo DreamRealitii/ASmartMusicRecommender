@@ -257,7 +257,7 @@ public class SpotifyAPI {
   public static String[] getRecommendations(SpotifyAnalysis track) {
     String accessToken = auth.getAccessCode();
     String genre = track.getGenres();
-    genre = genre.substring(1, genre.length()-2);
+    genre = genre.substring(1, genre.length()-1);
     String requestUrl = SONG_RECOMMENDATION_URL + "seed_artists=" + track.getArtistsID() + "&seed_genres=" + genre + "&seed_tracks=" + track.getTrackId();
     String responseString;
     try{

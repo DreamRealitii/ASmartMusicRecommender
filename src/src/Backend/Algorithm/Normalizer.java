@@ -3,6 +3,9 @@ package Backend.Algorithm;
 import Backend.Algorithm.Reader.Channel;
 import Backend.Helper.PrintHelper;
 import java.util.Arrays;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.RecursiveAction;
+import java.util.concurrent.RecursiveTask;
 
 /**
  * @author Ethan Carnahan
@@ -26,17 +29,23 @@ public class Normalizer {
     System.out.println("Normalizer: Running normalization on transform of " + left.length + " samples");
 
     normalizedLeft = normalizeTransform(left);
-    if (right != null)
-      normalizedRight = normalizeTransform(right);
-    else
-      normalizedRight = null;
+    normalizedRight = normalizeTransform(right);
+  }
+
+  public Normalizer(float[][] left, float[][] right) {
+    System.out.println("Normalizer: Running normalization on transform of " + left.length + " samples");
+
+    normalizedLeft = normalizeTransform(left);
+    normalizedRight = normalizeTransform(right);
   }
 
   public float[][] getNormalized(Channel channel) {
     return (channel == Channel.LEFT ? normalizedLeft : normalizedRight);
   }
+  //endregion
 
-  public static float[][] normalizeTransform(float[][] channel) {
+  //region Private methods
+  private static float[][] normalizeTransform(float[][] channel) {
     // Check null
     if (channel == null)
       return null;
@@ -61,62 +70,53 @@ public class Normalizer {
     return loudnessToPerceivedLoudness(result);
   }
 
-  public static double[] normalizeAverage(double[] averageVolume) {
-    // Copy array
-    double[] result = new double[averageVolume.length];
-    System.arraycopy(averageVolume, 0, result, 0, averageVolume.length);
-
-    // Do nothing for silence
-    double currentVolume = getSampleVolume(result);
-    if (currentVolume == 0)
-      return result;
-
-    // Find correct volume
-    while (Math.abs(currentVolume - targetVolume) > errorBound) {
-      double multiplier = 1 + (((targetVolume / currentVolume) - 1) * ratioMultiplier);
-      multiplyArray(result, multiplier);
-      currentVolume = getSampleVolume(result);
+  private static double getOverallVolume(float[][] channel) {
+    GetVolumeTask task = new GetVolumeTask(channel, 0, channel.length);
+    try (ForkJoinPool fjp = new ForkJoinPool()) {
+      return fjp.invoke(task) / (channel.length * Transform.FREQUENCY_RESOLUTION);
     }
-
-    // Convert to perceived loudness
-    return loudnessToPerceivedLoudness(result);
-  }
-  //endregion
-
-  //region Private methods
-  private static double getOverallVolume(float[][] transform) {
-    double sum = 0.0;
-
-    for (float[] sample : transform) {
-      double sampleSum = 0.0;
-      double[] perceivedLoudness = loudnessToPerceivedLoudness(sample);
-      for (double loudness : perceivedLoudness)
-        sampleSum += loudness;
-      sum += sampleSum / Transform.FREQUENCY_RESOLUTION;
-    }
-
-    return sum / transform.length;
   }
 
-  private static double getSampleVolume(double[] averageVolume) {
-    double sum = 0.0;
-    double[] perceivedLoudness = loudnessToPerceivedLoudness(averageVolume);
-    for (double loudness : perceivedLoudness) {
-      sum += loudness;
+  // Needs to be divided by channel.length and Transform.FREQUENCY_RESOLUTION afterwards.
+  private static class GetVolumeTask extends RecursiveTask<Double> {
+    private final float[][] channel;
+    private final int start, end;
+    private static final int THRESHOLD = 1;
+
+    public GetVolumeTask(float[][] channel, int start, int end) {
+      this.channel = channel;
+      this.start = start;
+      this.end = end;
     }
 
-    // The more spread out the amplitudes are, the more dependent the result is on the number of bins.
-    /*double average = sum / perceivedLoudness.length;
-    double spread = 0;
-    for (double loudness : perceivedLoudness)
-        spread += (loudness - average) * (loudness - average);
-    spread /= (averageVolume.length * average);
+    @Override
+    protected Double compute() {
+      int length = end - start;
+      if (length <= THRESHOLD)
+        return partialVolume();
 
-    if (spread != 0)
-      return sum / (1 + (Transform.FREQUENCY_RESOLUTION * spread * spreadDamp));
-    else
-      return sum;*/
-    return sum / (Transform.FREQUENCY_RESOLUTION);
+      GetVolumeTask firstTask = new GetVolumeTask(channel, start, start + (length / 2));
+      firstTask.fork();
+      GetVolumeTask secondTask = new GetVolumeTask(channel, start + (length / 2), end);
+      Double secondResult = secondTask.compute();
+      Double firstResult = firstTask.join();
+
+      return firstResult + secondResult;
+    }
+
+    private Double partialVolume() {
+      double sum = 0.0;
+
+      for (int i = start; i < end; i++) {
+        double sampleSum = 0.0;
+        double[] perceivedLoudness = loudnessToPerceivedLoudness(channel[i]);
+        for (double loudness : perceivedLoudness)
+          sampleSum += loudness;
+        sum += sampleSum;
+      }
+
+      return sum;
+    }
   }
 
   private static double loudnessToDb(double loudness) {
@@ -128,23 +128,6 @@ public class Normalizer {
   }
 
   // Convert loudness to perceived loudness.
-  private static double[] loudnessToPerceivedLoudness(double[] loudness) {
-    double[] result = new double[loudness.length];
-
-    for (int i = 0; i < result.length; i++) {
-      if (loudness[i] == 0.0) {
-        result[i] = 0.0;
-      } else {
-        double db = loudnessToDb(loudness[i]);
-        double frequency = Transform.frequencyAtBin(i);
-        double phons = EqualLoudness.dbToPhons(db, frequency);
-        result[i] = phonsToLoudness(phons);
-      }
-    }
-
-    return result;
-  }
-
   private static double[] loudnessToPerceivedLoudness(float[] loudness) {
     double[] result = new double[loudness.length];
 
@@ -181,30 +164,63 @@ public class Normalizer {
     return result;
   }
 
-  private static void multiplyArray(double[] array, double multiplier) {
-    for (int i = 0; i < array.length; i++)
-      array[i] *= multiplier;
+  private static class MultiplyArrayTask extends RecursiveAction {
+    private final float[][] array;
+    private final int start, end;
+    private final float multiplier;
+    private static final int THRESHOLD = 1;
+
+
+    public MultiplyArrayTask(float[][] array, int start, int end, float multiplier) {
+      this.array = array;
+      this.start = start;
+      this.end = end;
+      this.multiplier = multiplier;
+    }
+
+    @Override
+    protected void compute() {
+      int length = end - start;
+      if (length <= THRESHOLD) {
+        partialMultiply();
+        return;
+      }
+
+      MultiplyArrayTask task1 = new MultiplyArrayTask(array, start, start + (length / 2), multiplier);
+      task1.fork();
+      MultiplyArrayTask task2 = new MultiplyArrayTask(array, start + (length / 2), end, multiplier);
+      task2.compute();
+      task1.join();
+    }
+
+    private void partialMultiply() {
+      for (int i = start; i < end; i++)
+        for (int j = 0; j < array[0].length; j++)
+          array[i][j] *= multiplier;
+    }
   }
 
   private static void multiply2DArray(float[][] array, float multiplier) {
-    for (int i = 0; i < array.length; i++)
-      for (int j = 0; j < array[0].length; j++)
-        array[i][j] *= multiplier;
+    MultiplyArrayTask task = new MultiplyArrayTask(array, 0, array.length, multiplier);
+    try (ForkJoinPool fjp = new ForkJoinPool()) {
+      fjp.invoke(task);
+    }
   }
   //endregion
 
   // Test the effects of normalization on a perfectly flat frequency response.
   // Changing testVolume should have no effect. Changing targetVolume should.
   public static void main(String[] args) {
-    double testVolume = Short.MAX_VALUE;
-    double[] volume = new double[Transform.FREQUENCY_RESOLUTION];
-    Arrays.fill(volume, testVolume);
+    float testVolume = Short.MAX_VALUE;
+    float[][] volume = new float[10000][Transform.FREQUENCY_RESOLUTION];
+    for (float[] floats : volume)
+      Arrays.fill(floats, testVolume);
 
     long startTime = System.nanoTime();
-    double[] loudness = normalizeAverage(volume);
+    float[][] loudness = normalizeTransform(volume);
     System.out.println("Calculation time: " + ((System.nanoTime() - startTime) / 1000000000.0) + " seconds");
 
     PrintHelper.printFrequencies();
-    PrintHelper.printValues("Loudness", loudness);
+    PrintHelper.printValues("Loudness", loudness[5000]);
   }
 }
