@@ -140,7 +140,7 @@
     <Component class="javax.swing.JLabel" name="instructions">
       <Properties>
         <Property name="horizontalAlignment" type="int" value="0"/>
-        <Property name="text" type="java.lang.String" value="&lt;html&gt;&#xa;Type in the &quot;track ID&quot; of a Spotify song. This can be found in&lt;br&gt;&#xa;the song&apos;s &quot;share&quot; link after &quot;/track/&quot;. For example, the track ID of&lt;br&gt;&#xa; &lt;a href=&quot;https://open.spotify.com/track/17lrs2l9qXEuFybi7hSsid?si=37b141e7c99649c7&quot;&gt;&#xa;https://open.spotify.com/track/17lrs2l9qXEuFybi7hSsid?si=37b141e7c99649c7&lt;/a&gt;&lt;br&gt;&#xa;is &quot;17lrs2l9qXEuFybi7hSsid&quot;. Do not include the &quot;?si=&quot; value.&#xa;&lt;/html&gt;"/>
+        <Property name="text" type="java.lang.String" value="&lt;html&gt;&#xa;Type in the URL of a Spotify song given by (... -&gt; Share -&gt; Copy Song Link). &lt;br&gt;&#xa;For Example: https://open.spotify.com/track/17lrs2l9qXEuFybi7hSsid?si=37b141e7c99649c7&#xa;&lt;/html&gt;"/>
       </Properties>
     </Component>
     <Container class="javax.swing.JScrollPane" name="scrollPanel">
