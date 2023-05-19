@@ -218,7 +218,7 @@ public class SimpleAnalysis implements SoundAnalysis {
         List<SimpleAnalysis> others = getAllSavedAnalyses();
         if (others.size() < 2)
           throw new IllegalStateException("SimpleAnalysis: Need at least two saved analyses to compare.");
-        results = AnalysisCompare.compareAnalyses(others);
+        results = AnalysisCompare.compareAllAnalyses(others);
         results = AnalysisCompare.mostAndLeastSimilar(results);
       } catch (IOException | IllegalStateException e) {
         System.out.println("SimpleAnalysis: Failed to load saved analyses - " + e.getMessage());
@@ -227,13 +227,13 @@ public class SimpleAnalysis implements SoundAnalysis {
     } else if (analyses.size() == 1) {  // One argument: Compare one against all saved.
       try {
         List<SimpleAnalysis> others = getAllSavedAnalyses();
-        results = AnalysisCompare.compareAnalyses(analyses, others);
+        results = AnalysisCompare.compareTheseToThoseAnalyses(analyses, others);
       } catch (IOException e) {
         System.out.println("SimpleAnalysis: Failed to load saved analyses - " + e.getMessage());
         System.exit(1);
       }
     } else {  // Multiple arguments: Compare arguments against each other.
-      results = AnalysisCompare.compareAnalyses(analyses);
+      results = AnalysisCompare.compareAllAnalyses(analyses);
       results = AnalysisCompare.mostAndLeastSimilar(results);
     }
     System.out.println("\nCalculation time: " + ((System.nanoTime() - startTime) / 1000000000.0) + " seconds");
