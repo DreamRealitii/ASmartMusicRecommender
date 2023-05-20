@@ -100,7 +100,7 @@ public class MainSearch extends javax.swing.JFrame {
         errorLabel.setVisible(false);
 
         instructions.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        instructions.setText("<html>\nType in the \"track ID\" of a Spotify song. This can be found in<br>\nthe song's \"share\" link after \"/track/\". For example, the track ID of<br>\n <a href=\"https://open.spotify.com/track/17lrs2l9qXEuFybi7hSsid?si=37b141e7c99649c7\">\nhttps://open.spotify.com/track/17lrs2l9qXEuFybi7hSsid?si=37b141e7c99649c7</a><br>\nis \"17lrs2l9qXEuFybi7hSsid\". Do not include the \"?si=\" value.\n</html>");
+        instructions.setText("<html>\nType in the URL of a Spotify song given by (... -> Share -> Copy Song Link). <br>\nFor Example: https://open.spotify.com/track/17lrs2l9qXEuFybi7hSsid?si=37b141e7c99649c7\n</html>");
 
         songList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         scrollPanel.setViewportView(songList);
@@ -214,7 +214,7 @@ public class MainSearch extends javax.swing.JFrame {
                 comparisonAnalyses.add(SpotifyAPI.getTrackFeatures(id));
 
             // Compare songs and print results.
-            List<CompareResult> results = AnalysisCompare.compareAnalyses(userAnalysis, comparisonAnalyses);
+            List<CompareResult> results = AnalysisCompare.compareTheseToThoseAnalyses(userAnalysis, comparisonAnalyses);
 
             String[] resultIds = new String[results.size()];
             for (int i = 0; i < results.size(); i++)
