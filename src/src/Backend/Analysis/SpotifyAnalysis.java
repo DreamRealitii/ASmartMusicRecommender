@@ -28,7 +28,7 @@ public class SpotifyAnalysis implements SoundAnalysis {
   // Multiplies arctan bounds from pi/2 to 1.
   private static final double ARCTAN_MULTIPLIER = 2.0 / Math.PI;
   private final String trackId;
-  private final String artistsID, genres;
+  private final String[] artistsID, genres;
 
   public SpotifyAnalysis(String jsonString, String trackId) {
     acousticness = ParseJson.getDouble(jsonString, "acousticness");
@@ -45,11 +45,11 @@ public class SpotifyAnalysis implements SoundAnalysis {
     mode = ParseJson.getInt(jsonString, "mode");
     time_signature = ParseJson.getInt(jsonString, "time_signature");
     this.trackId = trackId;
-    this.artistsID = "";
-    this.genres = "";
+    this.artistsID = new String[] {""};
+    this.genres = new String[]{""};
   }
 
-  public SpotifyAnalysis(String jsonString, String trackId, String artistsId, String genres) {
+  public SpotifyAnalysis(String jsonString, String trackId, String[] artistsId, String[] genres) {
     acousticness = ParseJson.getDouble(jsonString, "acousticness");
     danceability = ParseJson.getDouble(jsonString, "danceability");
     energy = ParseJson.getDouble(jsonString, "energy");
@@ -85,8 +85,8 @@ public class SpotifyAnalysis implements SoundAnalysis {
     this.mode = mode;
     this.time_signature = time_signature;
     this.trackId = trackId;
-    this.artistsID = "";
-    this.genres = "";
+    this.artistsID = new String[] {""};
+    this.genres = new String[]{""};
   }
 
   //endregion
@@ -96,11 +96,11 @@ public class SpotifyAnalysis implements SoundAnalysis {
     return trackId;
   }
 
-  public String getArtistsID(){
+  public String[] getArtistsID(){
     return artistsID;
   }
 
-  public String getGenres(){
+  public String[] getGenres(){
     return genres;
   }
 

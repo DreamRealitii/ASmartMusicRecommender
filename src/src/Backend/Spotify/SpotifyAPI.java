@@ -4,6 +4,7 @@ import Backend.Analysis.SpotifyAnalysis;
 import Backend.Helper.HttpRequest;
 import Backend.Helper.ParseJson;
 
+import java.util.Arrays;
 import java.util.HashMap;
 
 /**
@@ -123,7 +124,7 @@ public class SpotifyAPI {
     }
 
     // Parse response into a SpotifyAnalysis object.
-    HashMap<String, String> artistsAndGenres = getArtistAndGenre(trackId);
+    HashMap<String, String[]> artistsAndGenres = getArtistAndGenre(trackId);
     return new SpotifyAnalysis(jsonString, trackId, artistsAndGenres.get("artists"), artistsAndGenres.get("genres"));
   }
 
@@ -133,30 +134,42 @@ public class SpotifyAPI {
    * @param trackId TrackId for song to get the artist and genre
    * @throws RuntimeException if something goes wrong. It could be so many things.
    */
-  private static HashMap<String, String> getArtistAndGenre(String trackId) {
-    HashMap<String, String> result = new HashMap<>();
+  private static HashMap<String, String[]> getArtistAndGenre(String trackId) {
+    HashMap<String, String[]> result = new HashMap<>();
     String accessToken = auth.getAccessCode();
     String url = TRACK_URL + trackId;
     String responseString;
     try{
       responseString = HttpRequest.getJsonFromUrl(url, accessToken);
-      String secondResponseString = HttpRequest.getJsonFromUrl("https://api.spotify.com/v1/recommendations/available-genre-seeds", accessToken);
-      String[] recommendedGenres = ParseJson.getArray(secondResponseString, "genres");
-      int seedGenre =  (int)(Math.random() * recommendedGenres.length);
-      String genre = recommendedGenres[seedGenre];
       String[] artistsArray = ParseJson.getArray(responseString, "artists");
       if (artistsArray.length > 1) {
-        StringBuilder artists = new StringBuilder();
+        String[] artists = new String[artistsArray.length];
+        int i = 0;
         for (String s : artistsArray) {
-          artists.append(ParseJson.getString(s, "id"));
-          result.put("artists", artists.toString());
+          artists[i] = ParseJson.getString(s, "id");
+          i++;
+          System.out.println("Artists: " + Arrays.toString(artists));
+          result.put("artists", artists);
         }
       }else {
-        String id = ParseJson.getString(artistsArray[0], "id");
+        String[] id = new String[] {ParseJson.getString(artistsArray[0], "id")};
         result.put("artists", id);
       }
+      String album = ParseJson.getObject(responseString, "album");
+      if (album.contains("genres")) {
+        String[] genres = ParseJson.getArray(album, "genres");
+        System.out.println("Genres");
+        result.put("genres", genres);
+      }else {
+        String secondResponseString = HttpRequest.getJsonFromUrl("https://api.spotify.com/v1/recommendations/available-genre-seeds", accessToken);
+        String[] recommendedGenres = ParseJson.getArray(secondResponseString, "genres");
+        int seedGenre =  (int)(Math.random() * recommendedGenres.length);
+        String[] genre = new String[] {recommendedGenres[seedGenre]};
+        result.put("genres", genre);
+      }
 
-      result.put("genres", genre);
+
+
       //System.out.println("Results:" + result);
 
     }catch(RuntimeException e) {
@@ -256,9 +269,16 @@ public class SpotifyAPI {
    */
   public static String[] getRecommendations(SpotifyAnalysis track) {
     String accessToken = auth.getAccessCode();
-    String genre = track.getGenres();
-    genre = genre.substring(1, genre.length()-2);
-    String requestUrl = SONG_RECOMMENDATION_URL + "seed_artists=" + track.getArtistsID() + "&seed_genres=" + genre + "&seed_tracks=" + track.getTrackId();
+
+    String genres = Arrays.toString(track.getGenres());
+    genres = genres.replaceAll("\"", "");
+    genres = genres.substring(1, genres.length()-1);
+    System.out.println("genres: " + genres);
+    String artists = Arrays.toString(track.getArtistsID());
+    artists = artists.substring(1, artists.length()-1);
+    System.out.println("artists: " + artists);
+    String requestUrl = SONG_RECOMMENDATION_URL + "seed_artists=" + artists.replaceAll("\\s", "") + "&seed_genres=" + genres.replaceAll("\\s", "") + "&seed_tracks=" + track.getTrackId();
+    System.out.println("Request URL: " + requestUrl);
     String responseString;
     try{
       responseString = HttpRequest.getJsonFromUrl(requestUrl, accessToken);
