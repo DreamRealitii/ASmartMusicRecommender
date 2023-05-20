@@ -27,7 +27,7 @@ public class SpotifyAnalysis implements SoundAnalysis {
   private static final double DIFFERENCE_EXPONENT = 2.0;
   // Multiplies arctan bounds from pi/2 to 1.
   private static final double ARCTAN_MULTIPLIER = 2.0 / Math.PI;
-  private final String trackId;
+  private final String trackId, trackName;
   private final String[] artistsID, genres;
 
   public SpotifyAnalysis(String jsonString, String trackId) {
@@ -47,9 +47,10 @@ public class SpotifyAnalysis implements SoundAnalysis {
     this.trackId = trackId;
     this.artistsID = new String[] {""};
     this.genres = new String[]{""};
+    this.trackName = "";
   }
 
-  public SpotifyAnalysis(String jsonString, String trackId, String[] artistsId, String[] genres) {
+  public SpotifyAnalysis(String jsonString, String trackId, String[] artistsId, String[] genres, String trackName) {
     acousticness = ParseJson.getDouble(jsonString, "acousticness");
     danceability = ParseJson.getDouble(jsonString, "danceability");
     energy = ParseJson.getDouble(jsonString, "energy");
@@ -66,6 +67,7 @@ public class SpotifyAnalysis implements SoundAnalysis {
     this.trackId = trackId;
     this.artistsID = artistsId;
     this.genres = genres;
+    this.trackName = trackName;
   }
 
   public SpotifyAnalysis(double acousticness, double danceability, double energy,
@@ -87,6 +89,7 @@ public class SpotifyAnalysis implements SoundAnalysis {
     this.trackId = trackId;
     this.artistsID = new String[] {""};
     this.genres = new String[]{""};
+    this.trackName = "";
   }
 
   //endregion

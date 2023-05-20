@@ -124,8 +124,10 @@ public class SpotifyAPI {
     }
 
     // Parse response into a SpotifyAnalysis object.
-    HashMap<String, String[]> artistsAndGenres = getArtistAndGenre(trackId);
-    return new SpotifyAnalysis(jsonString, trackId, artistsAndGenres.get("artists"), artistsAndGenres.get("genres"));
+    HashMap<String, String[]> artistsAndGenres = getArtistGenreName(trackId);
+    String trackName = Arrays.toString(artistsAndGenres.get("name"));
+    System.out.println("Name:" + trackName);
+    return new SpotifyAnalysis(jsonString, trackId, artistsAndGenres.get("artists"), artistsAndGenres.get("genres"), trackName.substring(1, trackName.length()-1));
   }
 
   /**
@@ -134,7 +136,7 @@ public class SpotifyAPI {
    * @param trackId TrackId for song to get the artist and genre
    * @throws RuntimeException if something goes wrong. It could be so many things.
    */
-  private static HashMap<String, String[]> getArtistAndGenre(String trackId) {
+  private static HashMap<String, String[]> getArtistGenreName(String trackId) {
     HashMap<String, String[]> result = new HashMap<>();
     String accessToken = auth.getAccessCode();
     String url = TRACK_URL + trackId;
@@ -167,10 +169,8 @@ public class SpotifyAPI {
         String[] genre = new String[] {recommendedGenres[seedGenre]};
         result.put("genres", genre);
       }
-
-
-
-      //System.out.println("Results:" + result);
+      String[] trackName = new String[] {ParseJson.getString(responseString, "name")};
+      result.put("name", trackName);
 
     }catch(RuntimeException e) {
       e.printStackTrace();
@@ -190,7 +190,7 @@ public class SpotifyAPI {
     String playlistCreationUrl = CREATE_PLAYLIST_URL + USER_ID + "/playlists";
     String uris = String.join(",", trackIds);
     StringBuilder body = new StringBuilder();
-    body.append("{\"name\": \"ASMR playlist\",");
+    body.append("{\"name\": \"ASMR Recommendations for:\",");
     body.append("\"description\": \"Playlist created by ASMR\",");
     body.append("\"public\": false}");
     String responseString;
