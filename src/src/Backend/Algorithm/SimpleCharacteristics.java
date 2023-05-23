@@ -13,10 +13,10 @@ import java.io.*;
 public class SimpleCharacteristics {
   //region Fields and public methods
   // Average volume of each frequency bin.
-  private final double[] leftVolume, rightVolume;
+  protected final double[] leftVolume, rightVolume;
   // Average rate of volume change for each frequency bin.
-  private final double[] leftRisePlusFall, rightRisePlusFall;
-  private final double[] leftRiseMinusFall, rightRiseMinusFall;
+  protected final double[] leftRisePlusFall, rightRisePlusFall;
+  protected final double[] leftRiseMinusFall, rightRiseMinusFall;
   // Needed to weigh rise/fall differently.
   private static final double VOLUME_CHANGE_EXPONENT = 2.0;
   private static final double VOLUME_CHANGE_WEIGHT = 0.002;
@@ -44,7 +44,7 @@ public class SimpleCharacteristics {
   }
 
   // Used for loading.
-  private SimpleCharacteristics(double[] averageLeftVolume, double[] averageRightVolume,
+  protected SimpleCharacteristics(double[] averageLeftVolume, double[] averageRightVolume,
   double[] averageLeftRise, double[] averageRightRise, double[] averageLeftFall, double[] averageRightFall) {
     this.leftVolume = averageLeftVolume;
     this.rightVolume = averageRightVolume;

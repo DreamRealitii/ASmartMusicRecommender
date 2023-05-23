@@ -2,15 +2,18 @@ package Backend.Algorithm;
 
 import Backend.Algorithm.Reader.Channel;
 import Backend.Helper.PrintHelper;
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveTask;
+import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 /**
@@ -49,6 +52,17 @@ public class TemporalCharacteristics extends SimpleCharacteristics {
     }
   }
 
+  // Used for loading
+  private TemporalCharacteristics(SimpleCharacteristics simple, float[][][] leftCorrelaton, float[][][] rightCorrelation,
+      double[][] leftPeakRates, double[][] rightPeakRates) {
+    super(simple.leftVolume, simple.rightVolume, simple.leftRisePlusFall, simple.rightRisePlusFall,
+        simple.leftRiseMinusFall, simple.rightRiseMinusFall);
+    this.leftCorrelaton = leftCorrelaton;
+    this.rightCorrelation = rightCorrelation;
+    this.leftPeakRates = leftPeakRates;
+    this.rightPeakRates = rightPeakRates;
+  }
+
   public float[][][] getCorrelation(Channel channel) {
     return (channel == Channel.LEFT ? leftCorrelaton : rightCorrelation);
   }
@@ -67,11 +81,11 @@ public class TemporalCharacteristics extends SimpleCharacteristics {
 
     writer.write(rightCorrelation != null ? "Stereo" : "Mono");
     writer.newLine();
-    write3dArray(writer, leftCorrelaton);
-    write2dArray(writer, leftPeakRates);
+    writeCorrelationArray(writer, leftCorrelaton);
+    writePeakRateArray(writer, leftPeakRates);
     if (rightCorrelation != null) {
-      write3dArray(writer, rightCorrelation);
-      write2dArray(writer, rightPeakRates);
+      writeCorrelationArray(writer, rightCorrelation);
+      writePeakRateArray(writer, rightPeakRates);
     }
 
     writer.flush();
@@ -92,7 +106,31 @@ public class TemporalCharacteristics extends SimpleCharacteristics {
     zipOut.close();
     outputStream.close();
     inputStream.close();
-    //tempFile.delete();
+    tempFile.delete();
+  }
+
+  public static TemporalCharacteristics load(String filepath) throws IOException {
+    SimpleCharacteristics sc = SimpleCharacteristics.load(filepath);
+
+    if (!filepath.contains(".tem"))
+      filepath = filepath + ".tem";
+
+    FileInputStream inputStream = new FileInputStream(filepath);
+    GZIPInputStream zipIn = new GZIPInputStream(inputStream);
+    BufferedReader reader = new BufferedReader(new InputStreamReader(zipIn));
+
+    boolean stereo = reader.readLine().equals("Stereo");
+
+    float[][][] lc = loadCorrelationArray(reader);
+    double[][] lr = loadPeakRateArray(reader);
+    float[][][] rc = null;
+    double[][] rr = null;
+    if (stereo) {
+      rc = loadCorrelationArray(reader);
+      rr = loadPeakRateArray(reader);
+    }
+
+    return new TemporalCharacteristics(sc, lc, rc, lr, rr);
   }
   //endregion
 
@@ -286,7 +324,7 @@ public class TemporalCharacteristics extends SimpleCharacteristics {
     return (channel[bottomIndex] + (bottomToTopValue * bottomToTopIndex));
   }
 
-  private static void write3dArray(BufferedWriter writer, float[][][] array) throws IOException {
+  private static void writeCorrelationArray(BufferedWriter writer, float[][][] array) throws IOException {
     for (float[][] twoD : array) {
       for (float[] oneD : twoD) {
         for (float value : oneD) {
@@ -297,13 +335,30 @@ public class TemporalCharacteristics extends SimpleCharacteristics {
     }
   }
 
-  private static void write2dArray(BufferedWriter writer, double[][] array) throws IOException {
+  private static float[][][] loadCorrelationArray(BufferedReader reader) throws IOException {
+    float[][][] result = new float[Transform.FREQUENCY_RESOLUTION][Transform.FREQUENCY_RESOLUTION][CORRELATION_SAMPLES];
+    for (int i = 0; i < result.length; i++)
+      for (int j = 0; j < result[0].length; j++)
+        for (int k = 0; k < result[0][0].length; k++)
+          result[i][j][k] = Float.parseFloat(reader.readLine());
+    return result;
+  }
+
+  private static void writePeakRateArray(BufferedWriter writer, double[][] array) throws IOException {
     for (double[] oneD : array) {
       for (double value : oneD) {
         writer.write(String.valueOf(value));
         writer.newLine();
       }
     }
+  }
+
+  private static double[][] loadPeakRateArray(BufferedReader reader) throws IOException {
+    double[][] result = new double[Transform.FREQUENCY_RESOLUTION][RATE_MAX - RATE_MIN + 1];
+    for (int i = 0; i < result.length; i++)
+      for (int j = 0; j < result[0].length; j++)
+        result[i][j] = Double.parseDouble(reader.readLine());
+    return result;
   }
   //endregion
 
@@ -317,7 +372,6 @@ public class TemporalCharacteristics extends SimpleCharacteristics {
       TemporalCharacteristics temporalCharacteristics = new TemporalCharacteristics(normalizer);
       System.out.println("Calculation time: " + ((System.nanoTime() - startTime) / 1000000000.0) + " seconds");
       System.out.println("Left channel characteristics:");
-      temporalCharacteristics.write(args[0]);
 
       System.out.println("Correlation (same time only):");
       for (int i = 0; i < Transform.FREQUENCY_RESOLUTION; i += 4) {
