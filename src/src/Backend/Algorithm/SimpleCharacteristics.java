@@ -67,7 +67,7 @@ public class SimpleCharacteristics {
   }
 
   public void write(String filepath) throws IOException {
-    File file = new File(filepath);
+    File file = new File(filepath + ".simp");
     file.createNewFile();
     BufferedWriter writer = new BufferedWriter(new FileWriter(file));
 
@@ -87,6 +87,8 @@ public class SimpleCharacteristics {
   }
 
   public static SimpleCharacteristics load(String filepath) throws IOException {
+    if (!filepath.contains(".simp"))
+      filepath = filepath + ".simp";
     BufferedReader reader = new BufferedReader(new FileReader(filepath));
 
     boolean stereo = reader.readLine().equals("Stereo");

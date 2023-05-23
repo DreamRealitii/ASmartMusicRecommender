@@ -2,10 +2,16 @@ package Backend.Algorithm;
 
 import Backend.Algorithm.Reader.Channel;
 import Backend.Helper.PrintHelper;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveTask;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * @author Ethan Carnahan
@@ -49,6 +55,44 @@ public class TemporalCharacteristics extends SimpleCharacteristics {
 
   public double[][] getPeakRates(Channel channel) {
     return (channel == Channel.LEFT ? leftPeakRates : rightPeakRates);
+  }
+
+  public void write(String filepath) throws IOException {
+    super.write(filepath);
+
+    // Write temporary raw file
+    File tempFile = new File(filepath + ".temp");
+    tempFile.createNewFile();
+    BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile));
+
+    writer.write(rightCorrelation != null ? "Stereo" : "Mono");
+    writer.newLine();
+    write3dArray(writer, leftCorrelaton);
+    write2dArray(writer, leftPeakRates);
+    if (rightCorrelation != null) {
+      write3dArray(writer, rightCorrelation);
+      write2dArray(writer, rightPeakRates);
+    }
+
+    writer.flush();
+    writer.close();
+
+    // Compress file - See https://www.digitalocean.com/community/tutorials/java-gzip-example-compress-decompress-file
+    File compFile = new File(filepath + ".tem");
+    compFile.createNewFile();
+    FileInputStream inputStream = new FileInputStream(tempFile);
+    FileOutputStream outputStream = new FileOutputStream(compFile);
+    GZIPOutputStream zipOut = new GZIPOutputStream(outputStream);
+
+    byte[] buffer = new byte[65536];
+    while (inputStream.read(buffer) != -1)
+      zipOut.write(buffer);
+
+    zipOut.flush();
+    zipOut.close();
+    outputStream.close();
+    inputStream.close();
+    //tempFile.delete();
   }
   //endregion
 
@@ -241,6 +285,26 @@ public class TemporalCharacteristics extends SimpleCharacteristics {
 
     return (channel[bottomIndex] + (bottomToTopValue * bottomToTopIndex));
   }
+
+  private static void write3dArray(BufferedWriter writer, float[][][] array) throws IOException {
+    for (float[][] twoD : array) {
+      for (float[] oneD : twoD) {
+        for (float value : oneD) {
+          writer.write(String.valueOf(value));
+          writer.newLine();
+        }
+      }
+    }
+  }
+
+  private static void write2dArray(BufferedWriter writer, double[][] array) throws IOException {
+    for (double[] oneD : array) {
+      for (double value : oneD) {
+        writer.write(String.valueOf(value));
+        writer.newLine();
+      }
+    }
+  }
   //endregion
 
   // Prints the average correlation/peak rate information of the audio file in args[0].
@@ -253,6 +317,7 @@ public class TemporalCharacteristics extends SimpleCharacteristics {
       TemporalCharacteristics temporalCharacteristics = new TemporalCharacteristics(normalizer);
       System.out.println("Calculation time: " + ((System.nanoTime() - startTime) / 1000000000.0) + " seconds");
       System.out.println("Left channel characteristics:");
+      temporalCharacteristics.write(args[0]);
 
       System.out.println("Correlation (same time only):");
       for (int i = 0; i < Transform.FREQUENCY_RESOLUTION; i += 4) {
@@ -272,6 +337,7 @@ public class TemporalCharacteristics extends SimpleCharacteristics {
         PrintHelper.printValues(PrintHelper.format.format(Transform.frequencyAtBin(i)) +
             "hz", temporalCharacteristics.getPeakRates(Channel.LEFT)[i]);
     } catch (IOException e) {
+      e.printStackTrace();
       System.out.println(e.getMessage());
     }
   }
