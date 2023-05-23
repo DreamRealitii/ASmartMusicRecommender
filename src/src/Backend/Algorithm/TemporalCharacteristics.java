@@ -16,7 +16,7 @@ import java.util.concurrent.RecursiveTask;
 public class TemporalCharacteristics extends SimpleCharacteristics {
   //region Fields and public methods
   // Dimensions from left-to-right: [This bin][Bin compared to][Number of samples ahead]
-  private final double[][][] leftCorrelaton, rightCorrelation;
+  private final float[][][] leftCorrelaton, rightCorrelation;
   // Dimensions from left-to-right: [This bin][Possible peak frequency]
   private final double[][] leftPeakRates, rightPeakRates;
   // Number of samples to look ahead.
@@ -43,7 +43,7 @@ public class TemporalCharacteristics extends SimpleCharacteristics {
     }
   }
 
-  public double[][][] getCorrelation(Channel channel) {
+  public float[][][] getCorrelation(Channel channel) {
     return (channel == Channel.LEFT ? leftCorrelaton : rightCorrelation);
   }
 
@@ -53,14 +53,14 @@ public class TemporalCharacteristics extends SimpleCharacteristics {
   //endregion
 
   //region Private methods
-  private static double[][][] calculateCorrelation(float[][] channel, double[] averageVolume) {
+  private static float[][][] calculateCorrelation(float[][] channel, double[] averageVolume) {
     CorrelationTask task = new CorrelationTask(channel, averageVolume, 0, Transform.FREQUENCY_RESOLUTION);
     try (ForkJoinPool fjp = new ForkJoinPool()) {
       return fjp.invoke(task);
     }
   }
 
-  private static class CorrelationTask extends RecursiveTask<double[][][]> {
+  private static class CorrelationTask extends RecursiveTask<float[][][]> {
     private final float[][] channel;
     private final double[] averageVolume;
     private final int start, end;
@@ -74,7 +74,7 @@ public class TemporalCharacteristics extends SimpleCharacteristics {
     }
 
     @Override
-    protected double[][][] compute() {
+    protected float[][][] compute() {
       int length = end - start;
       if (length <= THRESHOLD)
         return partialCorrelation();
@@ -82,23 +82,23 @@ public class TemporalCharacteristics extends SimpleCharacteristics {
       CorrelationTask task1 = new CorrelationTask(channel, averageVolume, start, start + (length/2));
       task1.fork();
       CorrelationTask task2 = new CorrelationTask(channel, averageVolume, start + (length/2), end);
-      double[][][] result2 = task2.compute();
-      double[][][] result1 = task1.join();
+      float[][][] result2 = task2.compute();
+      float[][][] result1 = task1.join();
 
       return joinArrays(result1, result2);
     }
 
-    private double[][][] partialCorrelation() {
-      double[][][] result = new double[end - start][Transform.FREQUENCY_RESOLUTION][CORRELATION_SAMPLES];
+    private float[][][] partialCorrelation() {
+      float[][][] result = new float[end - start][Transform.FREQUENCY_RESOLUTION][CORRELATION_SAMPLES];
       for (int i = start; i < end; i++)
         for (int j = 0; j < result[0].length; j++)
           for (int k = 0; k < result[0][0].length; k++)
-            result[i - start][j][k] = correlation(channel, i, j, k, averageVolume);
+            result[i - start][j][k] = (float) correlation(channel, i, j, k, averageVolume);
       return result;
     }
 
-    private static double[][][] joinArrays(double[][][] a, double[][][] b) {
-      double[][][] result = new double[a.length + b.length][a[0].length][a[0][0].length];
+    private static float[][][] joinArrays(float[][][] a, float[][][] b) {
+      float[][][] result = new float[a.length + b.length][a[0].length][a[0][0].length];
 
       for (int i = 0; i < a.length; i++)
         for (int j = 0; j < a[0].length; j++)
@@ -126,11 +126,6 @@ public class TemporalCharacteristics extends SimpleCharacteristics {
   }
 
   private static double[][] calculatePeakRates(float[][] channel, double[] averageVolume) {
-    /*double[][] result = new double[Transform.FREQUENCY_RESOLUTION][RATE_MAX - RATE_MIN + 1];
-    for (int i = 0; i < result.length; i++)
-      for (int j = 0; j < result[0].length; j++)
-        result[i][j] = peakRateMatch(channel, i, RATE_MIN + j, averageVolume);
-    return result;*/
     PeakRatesTask task = new PeakRatesTask(channel, averageVolume, 0, Transform.FREQUENCY_RESOLUTION);
     try (ForkJoinPool fjp = new ForkJoinPool()) {
       return fjp.invoke(task);
