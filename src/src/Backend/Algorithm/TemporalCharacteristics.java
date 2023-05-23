@@ -4,6 +4,8 @@ import Backend.Algorithm.Reader.Channel;
 import Backend.Helper.PrintHelper;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.RecursiveTask;
 
 /**
  * @author Ethan Carnahan
@@ -52,12 +54,62 @@ public class TemporalCharacteristics extends SimpleCharacteristics {
 
   //region Private methods
   private static double[][][] calculateCorrelation(float[][] channel, double[] averageVolume) {
-    double[][][] result = new double[Transform.FREQUENCY_RESOLUTION][Transform.FREQUENCY_RESOLUTION][CORRELATION_SAMPLES];
-    for (int i = 0; i < result.length; i++)
-      for (int j = 0; j < result[0].length; j++)
-        for (int k = 0; k < result[0][0].length; k++)
-          result[i][j][k] = correlation(channel, i, j, k, averageVolume);
-    return result;
+    CorrelationTask task = new CorrelationTask(channel, averageVolume, 0, Transform.FREQUENCY_RESOLUTION);
+    try (ForkJoinPool fjp = new ForkJoinPool()) {
+      return fjp.invoke(task);
+    }
+  }
+
+  private static class CorrelationTask extends RecursiveTask<double[][][]> {
+    private final float[][] channel;
+    private final double[] averageVolume;
+    private final int start, end;
+    private static final int THRESHOLD = 1;
+
+    public CorrelationTask(float[][] channel, double[] averageVolume, int start, int end) {
+      this.channel = channel;
+      this.averageVolume = averageVolume;
+      this.start = start;
+      this.end = end;
+    }
+
+    @Override
+    protected double[][][] compute() {
+      int length = end - start;
+      if (length <= THRESHOLD)
+        return partialCorrelation();
+
+      CorrelationTask task1 = new CorrelationTask(channel, averageVolume, start, start + (length/2));
+      task1.fork();
+      CorrelationTask task2 = new CorrelationTask(channel, averageVolume, start + (length/2), end);
+      double[][][] result2 = task2.compute();
+      double[][][] result1 = task1.join();
+
+      return joinArrays(result1, result2);
+    }
+
+    private double[][][] partialCorrelation() {
+      double[][][] result = new double[end - start][Transform.FREQUENCY_RESOLUTION][CORRELATION_SAMPLES];
+      for (int i = start; i < end; i++)
+        for (int j = 0; j < result[0].length; j++)
+          for (int k = 0; k < result[0][0].length; k++)
+            result[i - start][j][k] = correlation(channel, i, j, k, averageVolume);
+      return result;
+    }
+
+    private static double[][][] joinArrays(double[][][] a, double[][][] b) {
+      double[][][] result = new double[a.length + b.length][a[0].length][a[0][0].length];
+
+      for (int i = 0; i < a.length; i++)
+        for (int j = 0; j < a[0].length; j++)
+          System.arraycopy(a[i][j], 0, result[i][j], 0, a[0][0].length);
+
+      for (int i = 0; i < b.length; i++)
+        for (int j = 0; j < b[0].length; j++)
+          System.arraycopy(b[i][j], 0, result[i + a.length][j], 0, b[0][0].length);
+
+      return result;
+    }
   }
 
   // Correlation = sum(bin A volume change * bin B volume change).
@@ -74,11 +126,63 @@ public class TemporalCharacteristics extends SimpleCharacteristics {
   }
 
   private static double[][] calculatePeakRates(float[][] channel, double[] averageVolume) {
-    double[][] result = new double[Transform.FREQUENCY_RESOLUTION][RATE_MAX - RATE_MIN + 1];
+    /*double[][] result = new double[Transform.FREQUENCY_RESOLUTION][RATE_MAX - RATE_MIN + 1];
     for (int i = 0; i < result.length; i++)
       for (int j = 0; j < result[0].length; j++)
         result[i][j] = peakRateMatch(channel, i, RATE_MIN + j, averageVolume);
-    return result;
+    return result;*/
+    PeakRatesTask task = new PeakRatesTask(channel, averageVolume, 0, Transform.FREQUENCY_RESOLUTION);
+    try (ForkJoinPool fjp = new ForkJoinPool()) {
+      return fjp.invoke(task);
+    }
+  }
+
+  private static class PeakRatesTask extends RecursiveTask<double[][]> {
+    private final float[][] channel;
+    private final double[] averageVolume;
+    private final int start, end;
+    private static final int THRESHOLD = 1;
+
+    public PeakRatesTask(float[][] channel, double[] averageVolume, int start, int end) {
+      this.channel = channel;
+      this.averageVolume = averageVolume;
+      this.start = start;
+      this.end = end;
+    }
+
+    @Override
+    protected double[][] compute() {
+      int length = end - start;
+      if (length <= THRESHOLD)
+        return partialPeakRates();
+
+      PeakRatesTask task1 = new PeakRatesTask(channel, averageVolume, start, start + (length/2));
+      task1.fork();
+      PeakRatesTask task2 = new PeakRatesTask(channel, averageVolume, start + (length/2), end);
+      double[][] result2 = task2.compute();
+      double[][] result1 = task1.join();
+
+      return joinArrays(result1, result2);
+    }
+
+    private double[][] partialPeakRates() {
+      double[][] result = new double[end - start][RATE_MAX - RATE_MIN + 1];
+      for (int i = start; i < end; i++)
+        for (int j = 0; j < result[0].length; j++)
+          result[i - start][j] = peakRateMatch(channel, i, RATE_MIN + j, averageVolume);
+      return result;
+    }
+
+    private double[][] joinArrays(double[][] a, double[][] b) {
+      double[][] result = new double[a.length + b.length][a[0].length];
+
+      for (int i = 0; i < a.length; i++)
+        System.arraycopy(a[i], 0, result[i], 0, a[0].length);
+      for (int i = 0; i < b.length; i++)
+        System.arraycopy(b[i], 0, result[i + a.length], 0, b[0].length);
+
+      return result;
+    }
   }
 
   // Peak rate strategy: Use lots of interpolation.
@@ -153,21 +257,11 @@ public class TemporalCharacteristics extends SimpleCharacteristics {
       long startTime = System.nanoTime();
       TemporalCharacteristics temporalCharacteristics = new TemporalCharacteristics(normalizer);
       System.out.println("Calculation time: " + ((System.nanoTime() - startTime) / 1000000000.0) + " seconds");
-
       System.out.println("Left channel characteristics:");
-      double[] leftVolume = temporalCharacteristics.getAverageVolume(Channel.LEFT);
-      double[] leftRise = temporalCharacteristics.getAverageRisePlusFall(Channel.LEFT);
-      double[] leftFall = temporalCharacteristics.getAverageRiseMinusFall(Channel.LEFT);
-
-      PrintHelper.printFrequencies();
-      PrintHelper.printValues("Loudness", leftVolume);
-      PrintHelper.printValues("Rise", leftRise);
-      PrintHelper.printValues("Fall", leftFall);
-      System.out.println();
 
       System.out.println("Correlation (same time only):");
-      for (int i = 0; i < Transform.FREQUENCY_RESOLUTION; i += 2) {
-        for (int j = 0; j < Transform.FREQUENCY_RESOLUTION; j += 2) {
+      for (int i = 0; i < Transform.FREQUENCY_RESOLUTION; i += 4) {
+        for (int j = 0; j < Transform.FREQUENCY_RESOLUTION; j += 4) {
           System.out.print(PrintHelper.format.format(Transform.frequencyAtBin(i)) +
               " with " + PrintHelper.format.format(Transform.frequencyAtBin(j)) + ": ");
           System.out.println(PrintHelper.format.format(temporalCharacteristics.getCorrelation(Channel.LEFT)[i][j][0]));
@@ -179,7 +273,7 @@ public class TemporalCharacteristics extends SimpleCharacteristics {
       for (int i = 0; i < bpms.length; i++)
         bpms[i] = RATE_MIN + i;
       PrintHelper.printValues("BPM Matches", bpms);
-      for (int i = 0; i < Transform.FREQUENCY_RESOLUTION; i += 2)
+      for (int i = 0; i < Transform.FREQUENCY_RESOLUTION; i += 4)
         PrintHelper.printValues(PrintHelper.format.format(Transform.frequencyAtBin(i)) +
             "hz", temporalCharacteristics.getPeakRates(Channel.LEFT)[i]);
     } catch (IOException e) {
