@@ -31,8 +31,8 @@ public class TemporalCharacteristics extends SimpleCharacteristics {
   // Number of samples to look ahead.
   private static final int CORRELATION_SAMPLES = (int)Math.round(Transform.TIME_RESOLUTION * 2); // From 0 to 2 seconds ahead
   // Which peak rates to check in beats-per-minute.
-  private static final int RATE_MIN = 30;
-  private static final int RATE_MAX = 600; // Needs to be less than (60 * Transform.TIME_RESOLUTION / 3).
+  public static final int RATE_MIN = 60;
+  public static final int RATE_MAX = 600; // Needs to be less than (60 * Transform.TIME_RESOLUTION / 3).
 
   public TemporalCharacteristics(Normalizer normalizer) {
     super(normalizer);
@@ -196,6 +196,9 @@ public class TemporalCharacteristics extends SimpleCharacteristics {
 
   // Correlation = sum(bin A volume change * bin B volume change).
   private static double correlation(float[][] channel, int binA, int binB, int samplesAhead, double[] averageVolume) {
+    if (binA == binB && samplesAhead == 0)
+      return 0.0;
+
     double result = 0.0;
 
     for (int i = 1; i < channel.length - samplesAhead; i++) {
