@@ -31,8 +31,8 @@ public class TemporalCharacteristics extends SimpleCharacteristics {
   // Number of samples to look ahead.
   private static final int CORRELATION_SAMPLES = (int)Math.round(Transform.TIME_RESOLUTION * 2); // From 0 to 2 seconds ahead
   // Which peak rates to check in beats-per-minute.
-  public static final int RATE_MIN = 60;
-  public static final int RATE_MAX = 600; // Needs to be less than (60 * Transform.TIME_RESOLUTION / 3).
+  public static final int RATE_MIN = 30;
+  public static final int RATE_MAX = 300; // Needs to be less than (60 * Transform.TIME_RESOLUTION / 3).
 
   public TemporalCharacteristics(Normalizer normalizer) {
     super(normalizer);
@@ -276,14 +276,15 @@ public class TemporalCharacteristics extends SimpleCharacteristics {
     double[] window = getWindow(rate);
     double[] peaks = getPeaks(channel, bin, window);
 
-    for (int i = 0; i < window.length; i++) {
-      double loopResult = 0.0;
-      for (double j = i; j < channel.length - 1; j += samplesPerBeat)
-        loopResult += interpolate(peaks, j);
-      result = Math.max(result, loopResult);
+    double start, end;
+    for (double i = 0; i < channel.length - samplesPerBeat - 1; i++) {
+      start = interpolate(peaks, i);
+      end = interpolate(peaks, i + samplesPerBeat);
+      if (start > averageVolume[bin] * 2 && end > averageVolume[bin] * 2)
+        result += 100;
     }
 
-    return result * samplesPerBeat / (channel.length * averageVolume[bin]);
+    return result / ((channel.length - samplesPerBeat - 1));
   }
 
   private static double[] getWindow(int rate) {
