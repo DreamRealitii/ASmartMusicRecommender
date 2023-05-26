@@ -24,8 +24,8 @@ public class FullAnalysis implements SoundAnalysis {
   //region Fields and public methods
   private TemporalCharacteristics characteristics;
   private final String filePath, fileName;
-  private static final double CORRELATION_WEIGHT = 1.0, PEAKRATE_WEIGHT = 0.5;
-  private static final double CORRELATION_EXPONENT = 0.5, PEAKRATE_EXPONENT = 0.5;
+  private static final double CORRELATION_WEIGHT = 1.0, PEAKRATE_WEIGHT = 1.0;
+  private static final double CORRELATION_EXPONENT = 0.5, PEAKRATE_EXPONENT = 2.5;
   private static final double ARCTAN_MULTIPLIER = 2.0 / Math.PI;
 
   public FullAnalysis(String filePath, boolean load, boolean save) throws IOException {
@@ -37,7 +37,7 @@ public class FullAnalysis implements SoundAnalysis {
       path = Paths.get(filePath);
       this.fileName = path.getFileName().toString();
       if(filePath.contains("\\SavedAnalysis\\") && filePath.contains(".tem"))
-        savePath = filePath;
+        savePath = filePath.substring(0, filePath.length()-4);
       else
         savePath = System.getProperty("user.dir") + "\\SavedAnalysis\\" + fileName;
       path = Paths.get(savePath);
@@ -72,11 +72,12 @@ public class FullAnalysis implements SoundAnalysis {
     File saveFolder = new File(System.getProperty("user.dir") + "\\SavedAnalysis");
     File[] files = saveFolder.listFiles();
     if (files == null)
-      throw new IOException("SimpleAnalysis: SavedAnalysis is not directory.");
+      throw new IOException("FullAnalysis: SavedAnalysis is not directory.");
 
     List<FullAnalysis> result = new ArrayList<>(files.length);
     for (File file : files)
-      result.add(new FullAnalysis(file.getPath(), true, false));
+      if (file.getPath().endsWith(".tem"))
+        result.add(new FullAnalysis(file.getPath(), true, false));
 
     return result;
   }
