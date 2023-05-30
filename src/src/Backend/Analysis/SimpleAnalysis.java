@@ -45,10 +45,10 @@ public class SimpleAnalysis implements SoundAnalysis {
     try {
       path = Paths.get(filePath);
       this.fileName = path.getFileName().toString();
-      if(filePath.contains("\\SavedAnalysis\\") && filePath.contains(".simple"))
+      if(filePath.contains("\\SavedAnalysis\\") && filePath.contains(".simp"))
         savePath = filePath;
       else
-        savePath = System.getProperty("user.dir") + "\\SavedAnalysis\\" + fileName + ".simple";
+        savePath = System.getProperty("user.dir") + "\\SavedAnalysis\\" + fileName;
       path = Paths.get(savePath);
     } catch (InvalidPathException e) {
       throw new IOException("SimpleAnalysis: Invalid filepath - " + e.getMessage());
@@ -76,7 +76,7 @@ public class SimpleAnalysis implements SoundAnalysis {
     }
   }
 
-  // Gets all .simple analyses saved in SavedAnalysis folder.
+  // Gets all .simp analyses saved in SavedAnalysis folder.
   public static List<SimpleAnalysis> getAllSavedAnalyses() throws IOException {
     File saveFolder = new File(System.getProperty("user.dir") + "\\SavedAnalysis");
     File[] files = saveFolder.listFiles();
