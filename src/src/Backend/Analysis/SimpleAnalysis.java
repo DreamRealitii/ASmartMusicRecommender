@@ -45,10 +45,10 @@ public class SimpleAnalysis implements SoundAnalysis {
     try {
       path = Paths.get(filePath);
       this.fileName = path.getFileName().toString();
-      if(filePath.contains("\\SavedAnalysis\\") && filePath.contains(".simple"))
+      if(filePath.contains("\\SavedAnalysis\\") && filePath.contains(".simp"))
         savePath = filePath;
       else
-        savePath = System.getProperty("user.dir") + "\\SavedAnalysis\\" + fileName + ".simple";
+        savePath = System.getProperty("user.dir") + "\\SavedAnalysis\\" + fileName;
       path = Paths.get(savePath);
     } catch (InvalidPathException e) {
       throw new IOException("SimpleAnalysis: Invalid filepath - " + e.getMessage());
@@ -76,7 +76,7 @@ public class SimpleAnalysis implements SoundAnalysis {
     }
   }
 
-  // Gets all .simple analyses saved in SavedAnalysis folder.
+  // Gets all .simp analyses saved in SavedAnalysis folder.
   public static List<SimpleAnalysis> getAllSavedAnalyses() throws IOException {
     File saveFolder = new File(System.getProperty("user.dir") + "\\SavedAnalysis");
     File[] files = saveFolder.listFiles();
@@ -218,7 +218,7 @@ public class SimpleAnalysis implements SoundAnalysis {
         List<SimpleAnalysis> others = getAllSavedAnalyses();
         if (others.size() < 2)
           throw new IllegalStateException("SimpleAnalysis: Need at least two saved analyses to compare.");
-        results = AnalysisCompare.compareAnalyses(others);
+        results = AnalysisCompare.compareAllAnalyses(others);
         results = AnalysisCompare.mostAndLeastSimilar(results);
       } catch (IOException | IllegalStateException e) {
         System.out.println("SimpleAnalysis: Failed to load saved analyses - " + e.getMessage());
@@ -227,13 +227,13 @@ public class SimpleAnalysis implements SoundAnalysis {
     } else if (analyses.size() == 1) {  // One argument: Compare one against all saved.
       try {
         List<SimpleAnalysis> others = getAllSavedAnalyses();
-        results = AnalysisCompare.compareAnalyses(analyses, others);
+        results = AnalysisCompare.compareTheseToThoseAnalyses(analyses, others);
       } catch (IOException e) {
         System.out.println("SimpleAnalysis: Failed to load saved analyses - " + e.getMessage());
         System.exit(1);
       }
     } else {  // Multiple arguments: Compare arguments against each other.
-      results = AnalysisCompare.compareAnalyses(analyses);
+      results = AnalysisCompare.compareAllAnalyses(analyses);
       results = AnalysisCompare.mostAndLeastSimilar(results);
     }
     System.out.println("\nCalculation time: " + ((System.nanoTime() - startTime) / 1000000000.0) + " seconds");

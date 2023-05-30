@@ -214,7 +214,7 @@ public class MainSearch extends javax.swing.JFrame {
                 comparisonAnalyses.add(SpotifyAPI.getTrackFeatures(id));
 
             // Compare songs and print results.
-            List<CompareResult> results = AnalysisCompare.compareAnalyses(userAnalysis, comparisonAnalyses);
+            List<CompareResult> results = AnalysisCompare.compareTheseToThoseAnalyses(userAnalysis, comparisonAnalyses);
 
             String[] resultIds = new String[results.size()];
             for (int i = 0; i < results.size(); i++)

@@ -208,7 +208,7 @@ public class LocalAnalysis extends javax.swing.JFrame {
             ProgressBar.setValue(ProgressBar.getMaximum());
 
             if (analyses.size() >= 2) {
-                List<CompareResult> results = AnalysisCompare.compareAnalyses(analyses);
+                List<CompareResult> results = AnalysisCompare.compareAllAnalyses(analyses);
                 //results = AnalysisCompare.mostAndLeastSimilar(results);
 
                 LocalCompareResults compareResults = new LocalCompareResults(results);

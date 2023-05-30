@@ -133,7 +133,7 @@ public class SpotifyAuth {
     System.out.println("SpotifyAuth: codeVerifier = " + codeVerifier);
     String codeChallenge = generateCodeChallenge(codeVerifier);
     System.out.println("SpotifyAuth: codeChallenge = " + codeChallenge);
-    openAuthorizationTab(codeVerifier, codeChallenge);
+    new Thread(() -> openAuthorizationTab(codeVerifier, codeChallenge)).start();
     String authorizationCode = getAuthorizationCode(codeVerifier);
     System.out.println("SpotifyAuth: authorizationCode = " + authorizationCode);
     return getAccessCode(codeVerifier, authorizationCode);
