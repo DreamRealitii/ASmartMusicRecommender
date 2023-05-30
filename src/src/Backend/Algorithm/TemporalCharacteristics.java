@@ -29,9 +29,9 @@ public class TemporalCharacteristics extends SimpleCharacteristics {
   // Dimensions from left-to-right: [This bin][Possible peak frequency]
   private final double[][] leftPeakRates, rightPeakRates;
   // Number of samples to look ahead.
-  private static final int CORRELATION_SAMPLES = (int)Math.round(Transform.TIME_RESOLUTION * 2); // From 0 to 2 seconds ahead
+  private static final int CORRELATION_SAMPLES = (int)Math.round(Transform.TIME_RESOLUTION * 1); // From 0 to 1 second ahead
   // Which peak rates to check in beats-per-minute.
-  public static final int RATE_MIN = 30;
+  public static final int RATE_MIN = 15;
   public static final int RATE_MAX = 300; // Needs to be less than (60 * Transform.TIME_RESOLUTION / 3).
 
   public TemporalCharacteristics(Normalizer normalizer) {
@@ -194,12 +194,12 @@ public class TemporalCharacteristics extends SimpleCharacteristics {
     }
   }
 
-  // Correlation = sum(bin A volume change * bin B volume change).
+  // Pearson correlation.
   private static double correlation(float[][] channel, int binA, int binB, int samplesAhead, double[] averageVolume) {
     if (binA == binB && samplesAhead == 0)
-      return 0.0;
+      return 1.0;
 
-    double result = 0.0;
+    /*double result = 0.0;
 
     for (int i = 1; i < channel.length - samplesAhead; i++) {
       double a = channel[i][binA] - channel[i - 1][binA];
@@ -207,7 +207,19 @@ public class TemporalCharacteristics extends SimpleCharacteristics {
       result += a * b;
     }
 
-    return result / ((channel.length - samplesAhead - 1) * averageVolume[binA]);
+    return result / ((channel.length - samplesAhead - 1) * averageVolume[binA]);*/
+
+    double sumX = 0.0, sumY = 0.0, sumXY = 0.0;
+
+    for (int i = 1; i < channel.length - samplesAhead; i++) {
+      double x = (channel[i][binA] - channel[i - 1][binA]);
+      double y = (channel[i + samplesAhead][binB] - channel[i + samplesAhead - 1][binB]);
+      sumX += x * x;
+      sumY += y * y;
+      sumXY += x * y;
+    }
+
+    return sumXY / Math.sqrt(sumX * sumY);
   }
 
   private static double[][] calculatePeakRates(float[][] channel, double[] averageVolume) {

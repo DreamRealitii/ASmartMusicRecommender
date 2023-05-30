@@ -24,8 +24,8 @@ public class FullAnalysis implements SoundAnalysis {
   //region Fields and public methods
   private TemporalCharacteristics characteristics;
   private final String filePath, fileName;
-  private static final double CORRELATION_WEIGHT = 1.0, PEAKRATE_WEIGHT = 1.0;
-  private static final double CORRELATION_EXPONENT = 0.5, PEAKRATE_EXPONENT = 2.5;
+  private static final double CORRELATION_WEIGHT = 2000.0, PEAKRATE_WEIGHT = 0.0;
+  private static final double CORRELATION_EXPONENT = 3.0, PEAKRATE_EXPONENT = 2.5;
   private static final double ARCTAN_MULTIPLIER = 2.0 / Math.PI;
 
   public FullAnalysis(String filePath, boolean load, boolean save) throws IOException {
@@ -165,7 +165,7 @@ public class FullAnalysis implements SoundAnalysis {
     for (int i = 0; i < a.length; i++)
       for (int j = 0; j < a[0].length; j++)
         for (int k = 0; k < a[0][0].length; k++)
-          result += Math.pow(Math.abs(a[i][j][k] - b[i][j][k]), exp) / (k + 1);
+          result += Math.pow(Math.abs(a[i][j][k] - b[i][j][k]), exp) / ((k * k) + 1);
 
     return result / (a.length * a[0].length * a[0][0].length);
   }
