@@ -277,8 +277,8 @@ public class MainSearch extends javax.swing.JFrame {
         for (String resultURL : resultURLs)
             if (resultURL != null)
                 ids.add("spotify:track:" + urlToId(resultURL));
-
-        SpotifyAPI.createPlaylist(ids.toArray(new String[0]));
+        SpotifyAnalysis song = new SpotifyAnalysis(id.substring(31, 53));
+        SpotifyAPI.createPlaylist(ids.toArray(new String[0]), song.getTrackName());
     }//GEN-LAST:event_playlistButtonActionPerformed
 
     private static String urlToId(String url) {

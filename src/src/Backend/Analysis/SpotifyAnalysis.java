@@ -5,6 +5,7 @@ import Backend.Spotify.SpotifyAPI;
 
 import java.text.DecimalFormat;
 import java.util.Arrays;
+import java.util.HashMap;
 
 /**
  * @author Ethan Carnahan
@@ -48,6 +49,27 @@ public class SpotifyAnalysis implements SoundAnalysis {
     this.artistsID = new String[] {""};
     this.genres = new String[]{""};
     this.trackName = "";
+  }
+
+  public SpotifyAnalysis(String trackId) {
+    acousticness = 0;
+    danceability = 0;
+    energy = 0;
+    instrumentalness = 0;
+    liveness = 0;
+    speechiness = 0;
+    valence = 0;
+    loudness = 0;
+    tempo = 0;
+    duration_ms = 0;
+    key = 0;
+    mode = 0;
+    time_signature = 0;
+    HashMap<String, String[]> nameArtistGenre =  SpotifyAPI.getArtistGenreName(trackId);
+    this.trackId = trackId;
+    this.artistsID = nameArtistGenre.get("artists");
+    this.genres = nameArtistGenre.get("genres");
+    this.trackName = Arrays.toString(nameArtistGenre.get("name")).substring(1, Arrays.toString(nameArtistGenre.get("name")).length()-1);
   }
 
   public SpotifyAnalysis(String jsonString, String trackId, String[] artistsId, String[] genres, String trackName) {
@@ -105,6 +127,10 @@ public class SpotifyAnalysis implements SoundAnalysis {
 
   public String[] getGenres(){
     return genres;
+  }
+
+  public String getTrackName() {
+    return trackName;
   }
 
   @Override
