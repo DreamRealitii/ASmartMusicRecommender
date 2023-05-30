@@ -121,6 +121,8 @@ public class SpotifyAnalysis implements SoundAnalysis {
     return trackId;
   }
 
+  public String getTrackName() { return trackName;}
+
   public String[] getArtistsID(){
     return artistsID;
   }
