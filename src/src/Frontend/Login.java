@@ -152,7 +152,7 @@ public class Login extends javax.swing.JFrame {
      * @param evt
      */
     private void userInputKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_userInputKeyReleased
-        System.out.println("username = " + userInput.getText());
+        //System.out.println("username = " + userInput.getText());
         username = userInput.getText();
     }//GEN-LAST:event_userInputKeyReleased
 
