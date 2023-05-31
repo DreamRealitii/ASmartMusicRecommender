@@ -220,10 +220,9 @@ public class MainSearch extends javax.swing.JFrame {
             userAnalysis.add(SpotifyAPI.getTrackFeatures(trackId));
 
             // Get N random songs to compare with.
-            List<SpotifyAnalysis> comparisonAnalyses = new ArrayList<>();
+            List<SpotifyAnalysis> comparisonAnalyses;
             String[] comparisonIds = SpotifyAPI.getRecommendations(userAnalysis.get(0));
-            for (String id : comparisonIds)
-                comparisonAnalyses.add(SpotifyAPI.getTrackFeatures(id));
+            comparisonAnalyses = new ArrayList<>(List.of(SpotifyAPI.getTracksFeatures(comparisonIds)));
 
             // Compare songs and print results.
             List<CompareResult> results = AnalysisCompare.compareTheseToThoseAnalyses(userAnalysis, comparisonAnalyses);
