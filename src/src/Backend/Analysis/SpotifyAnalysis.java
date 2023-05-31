@@ -131,10 +131,6 @@ public class SpotifyAnalysis implements SoundAnalysis {
     return genres;
   }
 
-  public String getTrackName() {
-    return trackName;
-  }
-
   @Override
   public double compareTo(SoundAnalysis other) {
       if (!(other instanceof SpotifyAnalysis otherSpotify)) {
