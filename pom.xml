@@ -6,7 +6,7 @@
 
     <groupId>groupId</groupId>
     <artifactId>ASmartMusicRecommender</artifactId>
-    <version>Beta</version>
+    <version>Release</version>
 
     <build>
         <sourceDirectory>src/src</sourceDirectory>
