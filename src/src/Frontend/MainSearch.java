@@ -94,7 +94,7 @@ public class MainSearch extends javax.swing.JFrame {
             }
         });
 
-        idLabel.setText("Track ID:");
+        idLabel.setText("Track URL:");
 
         errorLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         errorLabel.setText("Invalid ID");

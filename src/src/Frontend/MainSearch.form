@@ -138,7 +138,7 @@
     </Component>
     <Component class="javax.swing.JLabel" name="idLabel">
       <Properties>
-        <Property name="text" type="java.lang.String" value="Track ID:"/>
+        <Property name="text" type="java.lang.String" value="Track URL:"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="errorLabel">
