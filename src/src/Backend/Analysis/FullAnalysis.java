@@ -24,7 +24,7 @@ public class FullAnalysis implements SoundAnalysis {
   //region Fields and public methods
   private TemporalCharacteristics characteristics;
   private final String filePath, fileName;
-  private static final double CORRELATION_WEIGHT = 2000.0, PEAKRATE_WEIGHT = 0.0;
+  private static final double CORRELATION_WEIGHT = 5000.0, PEAKRATE_WEIGHT = 0.0;
   private static final double CORRELATION_EXPONENT = 3.0, PEAKRATE_EXPONENT = 2.5;
   private static final double ARCTAN_MULTIPLIER = 2.0 / Math.PI;
 

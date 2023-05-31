@@ -85,7 +85,8 @@ public class SimpleAnalysis implements SoundAnalysis {
 
     List<SimpleAnalysis> result = new ArrayList<>(files.length);
     for (File file : files)
-      result.add(new SimpleAnalysis(file.getPath(), true, false));
+      if (file.getPath().endsWith(".simp"))
+        result.add(new SimpleAnalysis(file.getPath(), true, false));
 
     return result;
   }
