@@ -14,11 +14,13 @@ import java.util.HashMap;
 public class SpotifyAPI {
 
   private static final String FEATURES_URL = "https://api.spotify.com/v1/audio-features/";
+  private static final String MANY_FEATURES_URL = "https://api.spotify.com/v1/audio-features?ids=";
   private static final String USERS_URL = "https://api.spotify.com/v1/users/";
   private static final String CREATE_PLAYLIST_URL = "https://api.spotify.com/v1/users/";
   private static final String VIEW_PLAYLIST_URL = "https://api.spotify.com/v1/playlists/";
   private static final String SEARCH_SONG_URL = "https://api.spotify.com/v1/search?q=";
   private static final String TRACK_URL = "https://api.spotify.com/v1/tracks/";
+  private static final String TRACKS_URL = "https://api.spotify.com/v1/tracks?ids=";
   private static final String SONG_RECOMMENDATION_URL = "https://api.spotify.com/v1/recommendations?";
   private static final String JSON_TYPE = "application/json";
   private static final SpotifyAuth auth = new SpotifyAuth();
@@ -127,6 +129,49 @@ public class SpotifyAPI {
     HashMap<String, String[]> artistsAndGenres = getArtistGenreName(trackId);
     String trackName = Arrays.toString(artistsAndGenres.get("name"));
     return new SpotifyAnalysis(jsonString, trackId, artistsAndGenres.get("artists"), artistsAndGenres.get("genres"), trackName.substring(1, trackName.length()-1));
+  }
+
+  /**
+   * Gets Spotify's track analysis of multiple songs (without filling in artists/genres)
+   *
+   * @param trackIds The random strings after "track/" in the url of a song.
+   * @return Spotify's basic track analyses.
+   * @throws RuntimeException if something goes wrong. It could be so many things.
+   */
+  public static SpotifyAnalysis[] getTracksFeatures(String[] trackIds) {
+    // Request track features.
+    String accessToken = auth.getAccessCode();
+    StringBuilder url = new StringBuilder(MANY_FEATURES_URL + trackIds[0]);
+    for (int i = 1; i < trackIds.length; i++) {
+      url.append(",");
+      url.append(trackIds[i]);
+    }
+    String jsonString;
+    try {
+      jsonString = HttpRequest.getJsonFromUrl(url.toString(), accessToken);
+    } catch (RuntimeException e) {
+      throw new RuntimeException("Spotify: Failed to connect to Spotify - " + e.getMessage());
+    }
+    String[] features = ParseJson.getArray(jsonString, "audio_features");
+
+    // Request track info to get names.
+    url = new StringBuilder(TRACKS_URL + trackIds[0]);
+    for (int i = 1; i < trackIds.length; i++) {
+      url.append(",");
+      url.append(trackIds[i]);
+    }
+    try {
+      jsonString = HttpRequest.getJsonFromUrl(url.toString(), accessToken);
+    } catch (RuntimeException e) {
+      throw new RuntimeException("Spotify: Failed to connect to Spotify - " + e.getMessage());
+    }
+    String[] tracks = ParseJson.getArray(jsonString, "tracks");
+
+    // Create result array.
+    SpotifyAnalysis[] result = new SpotifyAnalysis[tracks.length];
+    for (int i = 0; i < result.length; i++)
+      result[i] = new SpotifyAnalysis(features[i], trackIds[i], null, null, ParseJson.getString(tracks[i], "name"));
+    return result;
   }
 
   /**
