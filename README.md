@@ -1,5 +1,5 @@
 # ASmartMusicRecommender
-Recommend music based on sound analysis instead of author/genre.
+Recommend music based on sound analysis instead of author/genre, using a .jar application.
 
 # Links to Documentation:
 - User - https://docs.google.com/document/d/1qDOxYS7nrBuK766jSwN308Hlj1ByDYxRzhQNhwrTU5I/edit?usp=sharing
